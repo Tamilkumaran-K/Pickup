@@ -128,10 +128,15 @@ export function createApp() {
   // 5. Serve static web app if built, or informative server status dashboard
   const candidateDistDirs = [
     path.join(__dirname, '../web'),
+    path.join(__dirname, '../../public'),
+    path.join(__dirname, '../public'),
     path.join(__dirname, '../../web/dist'),
     path.join(__dirname, '../../../web/dist'),
+    path.join(__dirname, '../../../../web/dist'),
+    path.join(process.cwd(), 'packages/server/public'),
     path.join(process.cwd(), 'packages/server/dist/web'),
     path.join(process.cwd(), 'packages/web/dist'),
+    path.join(process.cwd(), 'public'),
     path.join(process.cwd(), 'dist'),
   ];
   const distDir = candidateDistDirs.find((d) => fs.existsSync(path.join(d, 'index.html')));
@@ -153,22 +158,25 @@ export function createApp() {
   <title>Pickup Signaling Server</title>
   <style>
     body { background: #07090E; color: #E2E8F0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; }
-    .card { background: #0F172A; border: 1px solid #1E293B; border-radius: 16px; padding: 36px; max-width: 460px; text-align: center; box-shadow: 0 20px 40px rgba(0,0,0,0.6); }
+    .card { background: #0F172A; border: 1px solid #1E293B; border-radius: 16px; padding: 36px; max-width: 480px; text-align: center; box-shadow: 0 20px 40px rgba(0,0,0,0.6); }
     h1 { color: #06B6D4; margin: 12px 0; font-size: 24px; }
     .badge { display: inline-flex; align-items: center; gap: 6px; padding: 4px 14px; background: rgba(16,185,129,0.15); color: #10B981; border: 1px solid rgba(16,185,129,0.3); border-radius: 9999px; font-weight: 600; font-size: 13px; }
     .dot { width: 8px; height: 8px; background: #10B981; border-radius: 50%; }
     p { color: #94A3B8; line-height: 1.6; font-size: 14px; margin: 12px 0 20px; }
-    .links { display: flex; gap: 12px; justify-content: center; }
+    .links { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
     a { color: #38BDF8; text-decoration: none; padding: 8px 16px; background: #1E293B; border-radius: 8px; font-size: 13px; font-weight: 500; transition: background 0.2s; }
     a:hover { background: #334155; }
+    .btn-primary { background: #06B6D4; color: #07090E; font-weight: 600; }
+    .btn-primary:hover { background: #22D3EE; }
   </style>
 </head>
 <body>
   <div class="card">
     <div class="badge"><span class="dot"></span> Signaling Server Online</div>
     <h1>Pickup Engine</h1>
-    <p>The Pickup Signaling and WebRTC Relay Server is operational and ready for device pairing.</p>
+    <p>Signaling and WebRTC relay server is active. If you are developing locally, the web client is hosted on Vite port 5173.</p>
     <div class="links">
+      <a href="http://localhost:5173" class="btn-primary">Open Web Client (:5173)</a>
       <a href="/api/health">Health Check</a>
       <a href="/api/config">ICE Config</a>
     </div>
