@@ -5,7 +5,7 @@
  * 3. Fallback Auto-Download -> Programmatic browser download + audio chime
  */
 
-import { sanitizeFileName } from '@dropflow/shared';
+import { sanitizeFileName } from '@pickup/shared';
 
 // Audio chime using Web Audio API synthesis
 export function playSuccessChime(): void {

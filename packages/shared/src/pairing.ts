@@ -68,7 +68,7 @@ export function createQrData(
     code: cleanPairingPin(pin),
     serverUrl,
   };
-  return `dropflow://${encodeURIComponent(JSON.stringify(payload))}`;
+  return `pickup://${encodeURIComponent(JSON.stringify(payload))}`;
 }
 
 /**
@@ -76,10 +76,14 @@ export function createQrData(
  */
 export function parseQrData(qrString: string): QrPairingPayload | null {
   try {
-    if (!qrString.startsWith('dropflow://')) {
+    let jsonStr = '';
+    if (qrString.startsWith('pickup://')) {
+      jsonStr = decodeURIComponent(qrString.slice('pickup://'.length));
+    } else if (qrString.startsWith('dropflow://')) {
+      jsonStr = decodeURIComponent(qrString.slice('dropflow://'.length));
+    } else {
       return null;
     }
-    const jsonStr = decodeURIComponent(qrString.slice('dropflow://'.length));
     const parsed = JSON.parse(jsonStr);
     if (parsed.v === 1 && parsed.deviceId && parsed.code) {
       return parsed as QrPairingPayload;

@@ -3,7 +3,7 @@ import path from 'path';
 import os from 'os';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
-import { sanitizeFileName, isDangerousFileType } from '@dropflow/shared';
+import { sanitizeFileName, isDangerousFileType } from '@pickup/shared';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -23,7 +23,7 @@ function createWindow() {
       contextIsolation: true,
       sandbox: true,
     },
-    title: 'DropFlow — Cross-Platform File Drop',
+    title: 'Pickup — Cross-Platform File Drop',
   });
 
   // Intercept and restrict navigation to trusted sources only
@@ -74,7 +74,7 @@ function createWindow() {
 app.whenReady().then(() => {
   // Set App User Model ID for Windows notifications
   if (process.platform === 'win32') {
-    app.setAppUserModelId('com.dropflow.app');
+    app.setAppUserModelId('com.pickup.app');
   }
 
   createWindow();
@@ -90,11 +90,11 @@ app.on('window-all-closed', () => {
   }
 });
 
-// IPC Handler: Zero-Click Silent File Save to ~/Downloads/FileDrop/
+// IPC Handler: Zero-Click Silent File Save to ~/Downloads/Pickup/
 // Hardened against directory traversal and dangerous executable auto-launch
 ipcMain.handle('save-file-silent', async (_: any, { fileName, buffer }: { fileName: string; buffer: ArrayBuffer }) => {
   try {
-    const saveDir = path.join(os.homedir(), 'Downloads', 'FileDrop');
+    const saveDir = path.join(os.homedir(), 'Downloads', 'Pickup');
     if (!fs.existsSync(saveDir)) {
       fs.mkdirSync(saveDir, { recursive: true });
     }
@@ -108,7 +108,7 @@ ipcMain.handle('save-file-silent', async (_: any, { fileName, buffer }: { fileNa
     if (isDangerousFileType(safeName)) {
       safeName = `${safeName}.download`;
       isQuarantined = true;
-      console.warn(`[DropFlow Desktop Security] Quarantined executable file as ${safeName}`);
+      console.warn(`[Pickup Desktop Security] Quarantined executable file as ${safeName}`);
     }
 
     // 3. Strict path containment verification to guarantee write stays within saveDir
@@ -136,15 +136,15 @@ ipcMain.handle('save-file-silent', async (_: any, { fileName, buffer }: { fileNa
 
     // 5. Write file contents to disk
     fs.writeFileSync(targetPath, Buffer.from(buffer));
-    console.log(`[DropFlow Desktop] Auto-saved file to ${targetPath}`);
+    console.log(`[Pickup Desktop] Auto-saved file to ${targetPath}`);
 
     // 6. Native OS Notification
     if (Notification.isSupported()) {
       const notification = new Notification({
-        title: isQuarantined ? 'DropFlow — Quarantined File Received' : 'DropFlow — File Received',
+        title: isQuarantined ? 'Pickup — Quarantined File Received' : 'Pickup — File Received',
         body: isQuarantined
           ? `${path.basename(targetPath)} was renamed to .download for security.`
-          : `${path.basename(targetPath)} has been automatically saved to FileDrop`,
+          : `${path.basename(targetPath)} has been automatically saved to Pickup`,
       });
       notification.on('click', () => {
         shell.showItemInFolder(targetPath);
@@ -237,7 +237,7 @@ ipcMain.handle('set-device-name', async (_: any, name: string) => {
 
 // IPC Handler: Open Save Folder in Windows File Explorer
 ipcMain.handle('open-save-folder', async () => {
-  const saveDir = path.join(os.homedir(), 'Downloads', 'FileDrop');
+  const saveDir = path.join(os.homedir(), 'Downloads', 'Pickup');
   if (!fs.existsSync(saveDir)) {
     fs.mkdirSync(saveDir, { recursive: true });
   }
@@ -248,7 +248,7 @@ ipcMain.handle('open-save-folder', async () => {
 // IPC Handler: Direct user to exact file location or folder in Windows File Explorer
 ipcMain.handle('show-item-in-folder', async (_: any, targetPath: string) => {
   try {
-    const saveDir = path.join(os.homedir(), 'Downloads', 'FileDrop');
+    const saveDir = path.join(os.homedir(), 'Downloads', 'Pickup');
     if (targetPath) {
       const resolved = path.resolve(targetPath);
       if (fs.existsSync(resolved)) {

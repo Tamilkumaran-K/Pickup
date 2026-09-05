@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Device } from '@dropflow/shared';
+import { Device } from '@pickup/shared';
 import { X, QrCode, KeyRound, ShieldCheck, Check } from 'lucide-react';
 
 interface PairingModalProps {

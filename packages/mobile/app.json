@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "DropFlow",
-    "slug": "dropflow",
+    "name": "Pickup",
+    "slug": "pickup",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -11,18 +11,18 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.dropflow.app",
+      "bundleIdentifier": "com.pickup.app",
       "infoPlist": {
-        "NSCameraUsageDescription": "DropFlow uses the camera to scan QR codes for instant device pairing.",
-        "NSPhotoLibraryUsageDescription": "DropFlow automatically saves received photos and videos to your Photos library with zero clicks.",
-        "NSPhotoLibraryAddUsageDescription": "DropFlow saves incoming photos and videos to your Camera Roll."
+        "NSCameraUsageDescription": "Pickup uses the camera to scan QR codes for instant device pairing.",
+        "NSPhotoLibraryUsageDescription": "Pickup automatically saves received photos and videos to your Photos library with zero clicks.",
+        "NSPhotoLibraryAddUsageDescription": "Pickup saves incoming photos and videos to your Camera Roll."
       }
     },
     "android": {
       "adaptiveIcon": {
         "backgroundColor": "#07090E"
       },
-      "package": "com.dropflow.app",
+      "package": "com.pickup.app",
       "permissions": [
         "CAMERA",
         "READ_MEDIA_IMAGES",

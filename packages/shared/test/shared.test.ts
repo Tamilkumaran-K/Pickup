@@ -210,6 +210,7 @@ describe('Shared Package - Mr. Perfect Verification Suite', () => {
 
     test('Sad Path: rejects malformed QR payloads', () => {
       assert.equal(parseQrData('https://google.com'), null);
+      assert.equal(parseQrData('pickup://invalid-json-data'), null);
       assert.equal(parseQrData('dropflow://invalid-json-data'), null);
     });
   });

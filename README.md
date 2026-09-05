@@ -1,4 +1,4 @@
-# DropFlow — Cross-Platform Zero-Click File Drop
+# Pickup — Cross-Platform Zero-Click File Drop
 
 <div align="center">
   <h3>AirDrop & LocalSend-style instant file transfer across Windows, macOS, Android, iOS, and Web.</h3>
@@ -14,7 +14,7 @@
 - 🔒 **End-to-End Encryption (AES-256-GCM)**: All file chunks are encrypted with keys derived from a 6-digit pairing PIN or QR code. The relay server never sees unencrypted content.
 - 🎯 **AirDrop-Style Radar**: Live animated radar view detects nearby devices on your local network and displays them with platform-specific badges.
 - 📂 **Platform-Native Zero-Click Auto-Save**:
-  - **Windows & macOS (Desktop)**: Automatically writes incoming files into `~/Downloads/FileDrop/` and displays native OS toast notifications.
+  - **Windows & macOS (Desktop)**: Automatically writes incoming files into `~/Downloads/Pickup/` and displays native OS toast notifications.
   - **Android & iOS (Mobile)**: Automatically routes incoming photos and videos into the user's native Photos / Gallery via `expo-media-library`.
   - **Web (Browser)**: Uses the **File System Access API** (`showDirectoryPicker`) to write directly to a granted folder with zero clicks, or triggers an instant automated browser download with completion chime.
 
@@ -27,7 +27,7 @@ file-drop/
 ├── package.json                   # Monorepo root with npm workspaces
 ├── tsconfig.base.json             # Shared TypeScript configuration
 ├── packages/
-│   ├── shared/                    # Pure TypeScript protocol & cryptography (@dropflow/shared)
+│   ├── shared/                    # Pure TypeScript protocol & cryptography (@pickup/shared)
 │   │   ├── src/
 │   │   │   ├── types.ts           # Protocol types (Device, Transfer, SignalingMessage)
 │   │   │   ├── chunker.ts         # 64KB binary chunker & stream reassembler
@@ -36,7 +36,7 @@ file-drop/
 │   │   │   └── pairing.ts         # 6-digit PIN code & QR payload generation
 │   │   └── test/                  # Unit tests (Happy, Edge, Sad, Rare paths)
 │   │
-│   ├── server/                    # Node.js WebSocket Signaling & Relay Server (@dropflow/server)
+│   ├── server/                    # Node.js WebSocket Signaling & Relay Server (@pickup/server)
 │   │   ├── src/
 │   │   │   ├── index.ts           # Express HTTP + WebSocket server setup
 │   │   │   ├── presence.ts        # LAN presence & device discovery
@@ -44,7 +44,7 @@ file-drop/
 │   │   │   └── signaling.ts       # WebRTC SDP offer/answer/ICE & chunk relay router
 │   │   └── test/                  # Integration tests for signaling, presence, and pairing
 │   │
-│   ├── web/                       # React + Vite Web Drop Client & Download Hub (@dropflow/web)
+│   ├── web/                       # React + Vite Web Drop Client & Download Hub (@pickup/web)
 │   │   ├── src/
 │   │   │   ├── App.tsx            # Main application router
 │   │   │   ├── components/
@@ -60,13 +60,13 @@ file-drop/
 │   │   │       └── autoSave.ts    # File System Access API & auto-download engine
 │   │   └── index.html             # High-aesthetic dark mode entry point
 │   │
-│   ├── desktop/                   # Electron Desktop Wrapper for Windows & macOS (@dropflow/desktop)
+│   ├── desktop/                   # Electron Desktop Wrapper for Windows & macOS (@pickup/desktop)
 │   │   ├── src/
-│   │   │   ├── main.ts            # Electron main process (native ~/Downloads/FileDrop/ auto-save)
+│   │   │   ├── main.ts            # Electron main process (native ~/Downloads/Pickup/ auto-save)
 │   │   │   └── preload.ts         # ContextBridge exposing window.fileDropNative
 │   │   └── package.json
 │   │
-│   └── mobile/                    # Expo React Native App for Android & iOS (@dropflow/mobile)
+│   └── mobile/                    # Expo React Native App for Android & iOS (@pickup/mobile)
 │       ├── App.tsx                # Mobile UI with Radar and received media feed
 │       ├── app.json               # Expo manifest with camera & media library permissions
 │       └── src/

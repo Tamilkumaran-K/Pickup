@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Transfer } from '@dropflow/shared';
+import { Transfer } from '@pickup/shared';
 import {
   ArrowDownLeft,
   ArrowUpRight,

@@ -1,5 +1,5 @@
 import { WebSocket } from 'ws';
-import { Device, SignalingMessage } from '@dropflow/shared';
+import { Device, SignalingMessage } from '@pickup/shared';
 
 export interface ClientSession {
   ws: WebSocket;

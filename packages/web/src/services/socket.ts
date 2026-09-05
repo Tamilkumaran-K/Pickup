@@ -1,4 +1,4 @@
-import { Device, SignalingMessage, SignalingMessageType } from '@dropflow/shared';
+import { Device, SignalingMessage, SignalingMessageType } from '@pickup/shared';
 
 type MessageHandler = (msg: SignalingMessage) => void;
 

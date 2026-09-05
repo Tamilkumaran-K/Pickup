@@ -15,13 +15,19 @@ export function createApp() {
   // 1. Security Headers (OWASP recommendations)
   app.use(securityHeaders());
 
-  // 2. CORS configuration
-  const allowedOrigins = process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(',') : '*';
-  app.use(cors({
-    origin: allowedOrigins,
-    methods: ['GET', 'POST', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
-  }));
+  // 2. CORS (Cross-Origin Resource Sharing) configuration
+  // Fully permissive origin resolver to support Vercel, localhost, and LAN clients
+  const corsOptions: cors.CorsOptions = {
+    origin: (_origin, callback) => {
+      callback(null, true);
+    },
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin'],
+    credentials: true,
+    optionsSuccessStatus: 200,
+  };
+  app.use(cors(corsOptions));
+  app.options('*', cors(corsOptions));
 
   // 3. Request body parsing with strict 1MB size limit
   app.use(express.json({ limit: '1mb' }));
@@ -60,7 +66,7 @@ export function createApp() {
   app.get('/api/health', (_req, res) => {
     res.json({
       status: 'ok',
-      service: 'DropFlow Signaling Server',
+      service: 'Pickup Signaling Server',
       onlineDevices: presence.getOnlineCount(),
       uptimeSeconds: Math.floor((Date.now() - startTime) / 1000),
       timestamp: Date.now(),
@@ -91,13 +97,13 @@ export function createApp() {
     let contentType = 'application/octet-stream';
 
     if (platform === 'windows' || platform === 'win') {
-      filename = 'DropFlow-Windows-Setup.exe';
+      filename = 'Pickup-Windows-Setup.exe';
       contentType = 'application/x-msdownload';
     } else if (platform === 'macos' || platform === 'mac') {
-      filename = 'DropFlow-macOS.dmg';
+      filename = 'Pickup-macOS.dmg';
       contentType = 'application/x-apple-diskimage';
     } else if (platform === 'android' || platform === 'apk') {
-      filename = 'DropFlow.apk';
+      filename = 'Pickup.apk';
       contentType = 'application/vnd.android.package-archive';
     } else {
       return res.status(404).json({ error: `Unknown download platform: ${platform}` });
@@ -112,7 +118,7 @@ export function createApp() {
 
     res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
     res.setHeader('Content-Type', contentType);
-    res.send(Buffer.from(`DropFlow ${platform} release binary`));
+    res.send(Buffer.from(`Pickup ${platform} release binary`));
   });
 
   // Handle HTTP Upgrade for WebSocket with path validation
@@ -166,7 +172,7 @@ export function startServer(port = 3001): Promise<{ server: http.Server; port: n
 
   // Graceful shutdown listeners
   const gracefulShutdown = (signal: string) => {
-    console.log(`[DropFlow Server] Received ${signal}, closing gracefully...`);
+    console.log(`[Pickup Server] Received ${signal}, closing gracefully...`);
     cleanup();
     appInstance.wss.clients.forEach((client) => {
       if (client.readyState === 1) { // OPEN
@@ -174,7 +180,7 @@ export function startServer(port = 3001): Promise<{ server: http.Server; port: n
       }
     });
     server.close(() => {
-      console.log('[DropFlow Server] HTTP and WebSocket server closed.');
+      console.log('[Pickup Server] HTTP and WebSocket server closed.');
       if (process.env.NODE_ENV !== 'test') {
         process.exit(0);
       }
@@ -188,7 +194,7 @@ export function startServer(port = 3001): Promise<{ server: http.Server; port: n
     server.listen(port, () => {
       const addr = server.address();
       const actualPort = typeof addr === 'object' && addr ? addr.port : port;
-      console.log(`[DropFlow Server] Listening on http://localhost:${actualPort} (WebSocket on /ws)`);
+      console.log(`[Pickup Server] Listening on http://localhost:${actualPort} (WebSocket on /ws)`);
       resolve({ server, port: actualPort, cleanup });
     });
   });

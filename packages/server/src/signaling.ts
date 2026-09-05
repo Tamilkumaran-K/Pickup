@@ -1,5 +1,5 @@
 import { WebSocket } from 'ws';
-import { SignalingMessage, Device, generatePairingPin, generateSecureToken } from '@dropflow/shared';
+import { SignalingMessage, Device, generatePairingPin, generateSecureToken } from '@pickup/shared';
 import { PresenceManager } from './presence.js';
 import { PairingManager } from './pairingManager.js';
 

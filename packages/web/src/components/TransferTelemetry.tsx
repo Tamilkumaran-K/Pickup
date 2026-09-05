@@ -1,5 +1,5 @@
 import React from 'react';
-import { Transfer } from '@dropflow/shared';
+import { Transfer } from '@pickup/shared';
 import { Activity, Gauge, ShieldCheck, Laptop, Smartphone, Globe, ArrowRight } from 'lucide-react';
 
 interface TransferTelemetryProps {

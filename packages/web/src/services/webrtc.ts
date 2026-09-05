@@ -13,7 +13,7 @@ import {
   base64ToBytes,
   sanitizeFileName,
   DEFAULT_CHUNK_SIZE,
-} from '@dropflow/shared';
+} from '@pickup/shared';
 import { signalingClient } from './socket.js';
 import { autoSaveManager } from './autoSave.js';
 

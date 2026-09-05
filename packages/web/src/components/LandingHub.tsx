@@ -99,7 +99,7 @@ export const LandingHub: React.FC<LandingHubProps> = ({ onLaunchWebDrop }) => {
           </div>
           <h3 style={{ fontSize: 18, marginBottom: 8 }}>Zero-Click Auto-Save</h3>
           <p style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.6 }}>
-            Files land directly into Photos/Gallery on mobile or Downloads/FileDrop on desktop. No manual &quot;tap to download&quot; buttons.
+            Files land directly into Photos/Gallery on mobile or Downloads/Pickup on desktop. No manual &quot;tap to download&quot; buttons.
           </p>
         </div>
 
@@ -127,7 +127,7 @@ export const LandingHub: React.FC<LandingHubProps> = ({ onLaunchWebDrop }) => {
       {/* Download Hub Cards */}
       <div id="downloads-section">
         <h2 style={{ fontSize: 24, marginBottom: 8, textAlign: 'center' }}>
-          Get DropFlow on All Your Devices
+          Get Pickup on All Your Devices
         </h2>
         <p style={{ fontSize: 14, color: 'var(--text-muted)', textAlign: 'center', marginBottom: 32 }}>
           Install native desktop or mobile clients for seamless background file reception.
@@ -141,12 +141,12 @@ export const LandingHub: React.FC<LandingHubProps> = ({ onLaunchWebDrop }) => {
             </div>
             <h3 style={{ fontSize: 17, marginBottom: 4 }}>Windows</h3>
             <p style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 16 }}>
-              Windows 10 / 11 • Native auto-save to ~/Downloads/FileDrop
+              Windows 10 / 11 • Native auto-save to ~/Downloads/Pickup
             </p>
             <a
               id="download-windows-btn"
               href="/api/download/windows"
-              download="DropFlow-Windows-Setup.exe"
+              download="Pickup-Windows-Setup.exe"
               className="btn btn-secondary"
               style={{ width: '100%', justifyContent: 'center', marginTop: 'auto', textDecoration: 'none' }}
               onClick={() => sounds.playClick()}
@@ -167,7 +167,7 @@ export const LandingHub: React.FC<LandingHubProps> = ({ onLaunchWebDrop }) => {
             <a
               id="download-macos-btn"
               href="/api/download/macos"
-              download="DropFlow-macOS.dmg"
+              download="Pickup-macOS.dmg"
               className="btn btn-secondary"
               style={{ width: '100%', justifyContent: 'center', marginTop: 'auto', textDecoration: 'none' }}
               onClick={() => sounds.playClick()}
@@ -188,7 +188,7 @@ export const LandingHub: React.FC<LandingHubProps> = ({ onLaunchWebDrop }) => {
             <a
               id="download-android-btn"
               href="/api/download/android"
-              download="DropFlow.apk"
+              download="Pickup.apk"
               className="btn btn-secondary"
               style={{ width: '100%', justifyContent: 'center', marginTop: 'auto', textDecoration: 'none' }}
               onClick={() => sounds.playClick()}

@@ -16,7 +16,7 @@ import {
   encryptBytes,
   decryptBytes,
   DEFAULT_CHUNK_SIZE,
-} from '@dropflow/shared';
+} from '@pickup/shared';
 
 describe('DropFlow End-to-End E2EE File Transfer Verification', () => {
   let serverInstance: http.Server;

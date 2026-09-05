@@ -5,7 +5,7 @@ import { WebSocket } from 'ws';
 import { createApp } from '../src/index.js';
 import { PairingManager } from '../src/pairingManager.js';
 import { constantTimeCompare, MemoryRateLimiter } from '../src/security.js';
-import { Device, SignalingMessage } from '@dropflow/shared';
+import { Device, SignalingMessage } from '@pickup/shared';
 
 describe('Server Package - Security Hardening Suite', () => {
   let serverInstance: http.Server;

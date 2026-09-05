@@ -7,7 +7,7 @@ import {
   deriveKeyFromSecret,
   computeKeyFingerprint,
   cleanPairingPin,
-} from '@dropflow/shared';
+} from '@pickup/shared';
 import { signalingClient } from './services/socket.js';
 import { webRtcManager } from './services/webrtc.js';
 import { sounds } from './services/soundEffects.js';
@@ -413,7 +413,7 @@ export function App() {
             <Radio size={24} color="#030712" />
           </div>
           <div>
-            <div className="brand-title">DropFlow</div>
+            <div className="brand-title">Pickup</div>
             <div className="brand-tagline">
               <span
                 style={{

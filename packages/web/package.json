@@ -1,15 +1,16 @@
 {
-  "name": "@dropflow/web",
+  "name": "@pickup/web",
   "version": "1.0.0",
+  "private": true,
   "type": "module",
-  "description": "DropFlow Web App & Download Hub — AirDrop-style zero-click file drop",
+  "description": "Pickup Modern Web App (AirDrop-style Radar & Zero-Click P2P)",
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview"
   },
   "dependencies": {
-    "@dropflow/shared": "*",
+    "@pickup/shared": "*",
     "canvas-confetti": "^1.9.3",
     "lucide-react": "^0.383.0",
     "react": "^18.3.1",

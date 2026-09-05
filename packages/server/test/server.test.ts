@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import http from 'http';
 import { WebSocket } from 'ws';
 import { createApp } from '../src/index.js';
-import { Device, SignalingMessage } from '@dropflow/shared';
+import { Device, SignalingMessage } from '@pickup/shared';
 
 describe('Server Package - Mr. Perfect Verification Suite', () => {
   let serverInstance: http.Server;

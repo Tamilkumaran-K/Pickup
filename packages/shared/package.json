@@ -1,8 +1,8 @@
 {
-  "name": "@dropflow/shared",
+  "name": "@pickup/shared",
   "version": "1.0.0",
   "type": "module",
-  "description": "Shared types, protocol, chunking, and encryption for DropFlow",
+  "description": "Shared types, protocol, chunking, and encryption for Pickup",
   "main": "./dist/src/index.js",
   "types": "./dist/src/index.d.ts",
   "exports": {

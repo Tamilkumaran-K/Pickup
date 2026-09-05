@@ -1,4 +1,4 @@
-import { Device } from '@dropflow/shared';
+import { Device } from '@pickup/shared';
 import { constantTimeCompare } from './security.js';
 
 interface ActiveCodeEntry {

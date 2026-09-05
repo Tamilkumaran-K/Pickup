@@ -1,8 +1,8 @@
 {
-  "name": "dropflow-monorepo",
+  "name": "pickup-monorepo",
   "version": "1.0.0",
   "private": true,
-  "description": "Cross-Platform File Drop App — AirDrop / LocalSend style zero-click file sync",
+  "description": "Pickup — Cross-Platform Peer-to-Peer File Transfer Engine (AirDrop / LocalSend style)",
   "workspaces": [
     "packages/*"
   ],

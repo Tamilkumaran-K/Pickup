@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { Device } from '@dropflow/shared';
+import { Device } from '@pickup/shared';
 import {
   UploadCloud,
   File as FileIcon,

@@ -1,8 +1,8 @@
 {
-  "name": "@dropflow/server",
+  "name": "@pickup/server",
   "version": "1.0.0",
   "type": "module",
-  "description": "Signaling & Relay Server for DropFlow (AirDrop / LocalSend style P2P)",
+  "description": "Signaling & Relay Server for Pickup (AirDrop / LocalSend style P2P)",
   "main": "./dist/src/index.js",
   "types": "./dist/src/index.d.ts",
   "scripts": {
@@ -13,7 +13,7 @@
     "test": "node --test dist/test/server.test.js dist/test/security.test.js dist/test/e2e.test.js"
   },
   "dependencies": {
-    "@dropflow/shared": "*",
+    "@pickup/shared": "*",
     "cors": "^2.8.5",
     "express": "^4.19.2",
     "ws": "^8.17.0"

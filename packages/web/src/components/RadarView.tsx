@@ -1,5 +1,5 @@
 import React from 'react';
-import { Device, DevicePlatform } from '@dropflow/shared';
+import { Device, DevicePlatform } from '@pickup/shared';
 import { Laptop, Smartphone, Globe, ShieldCheck, Sparkles, Wifi, Check } from 'lucide-react';
 import { sounds } from '../services/soundEffects.js';
 
