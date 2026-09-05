@@ -7,7 +7,7 @@
   "types": "./dist/src/index.d.ts",
   "scripts": {
     "prebuild": "npm --prefix ../shared run build",
-    "build": "tsc && (npm --prefix ../web run build || true) && node scripts/copy-web.js",
+    "build": "tsc",
     "dev": "tsc -w & node --watch dist/src/index.js",
     "start": "node dist/src/index.js",
     "test": "node --test dist/test/server.test.js dist/test/security.test.js dist/test/e2e.test.js"

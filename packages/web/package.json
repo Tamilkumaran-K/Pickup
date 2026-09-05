@@ -6,6 +6,7 @@
   "description": "Pickup Modern Web App (AirDrop-style Radar & Zero-Click P2P)",
   "scripts": {
     "dev": "vite",
+    "prebuild": "npm --prefix ../shared run build",
     "build": "tsc && vite build",
     "preview": "vite preview"
   },
