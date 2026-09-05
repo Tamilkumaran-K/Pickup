@@ -1,0 +1,27 @@
+{
+  "name": "@dropflow/server",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Signaling & Relay Server for DropFlow (AirDrop / LocalSend style P2P)",
+  "main": "./dist/src/index.js",
+  "types": "./dist/src/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc -w & node --watch dist/src/index.js",
+    "start": "node dist/src/index.js",
+    "test": "node --test dist/test/server.test.js dist/test/security.test.js dist/test/e2e.test.js"
+  },
+  "dependencies": {
+    "@dropflow/shared": "*",
+    "cors": "^2.8.5",
+    "express": "^4.19.2",
+    "ws": "^8.17.0"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.17",
+    "@types/express": "^4.17.21",
+    "@types/node": "^20.12.12",
+    "@types/ws": "^8.5.10",
+    "typescript": "^5.4.5"
+  }
+}

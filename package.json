@@ -1,0 +1,31 @@
+{
+  "name": "dropflow-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Cross-Platform File Drop App — AirDrop / LocalSend style zero-click file sync",
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "dev:server": "npm --prefix packages/server run dev",
+    "dev:web": "npm --prefix packages/web run dev",
+    "dev": "npm run dev:server & npm run dev:web",
+    "test:shared": "npm --prefix packages/shared test",
+    "test:server": "npm --prefix packages/server test",
+    "test": "npm run test:shared && npm run test:server",
+    "build": "npm run build --workspaces --if-present"
+  },
+  "keywords": [
+    "file-drop",
+    "airdrop",
+    "localsend",
+    "webrtc",
+    "p2p",
+    "cross-platform"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^26.4.1"
+  }
+}
