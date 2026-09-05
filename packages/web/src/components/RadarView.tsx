@@ -33,9 +33,23 @@ export const RadarView: React.FC<RadarViewProps> = ({
   onSelectDevice,
   onAddSimulatedDevice,
 }) => {
-  const radius = 155; // distance from radar center
+  const [windowWidth, setWindowWidth] = React.useState(
+    typeof window !== 'undefined' ? window.innerWidth : 800
+  );
 
-  // Find index of selected device to draw dynamic beam from center (270, 220)
+  React.useEffect(() => {
+    const handleResize = () => setWindowWidth(window.innerWidth);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  const isMobile = windowWidth < 520;
+  const isTablet = windowWidth < 768;
+  const radius = isMobile ? Math.min(110, Math.max(80, (windowWidth - 110) / 2)) : isTablet ? 130 : 155;
+  const centerX = isMobile ? Math.min(windowWidth / 2, 180) : 270;
+  const centerY = isMobile ? 170 : 220;
+
+  // Find index of selected device to draw dynamic beam from center
   const selectedIndex = selectedDevice
     ? discoveredDevices.findIndex((d) => d.id === selectedDevice.id)
     : -1;
@@ -81,10 +95,10 @@ export const RadarView: React.FC<RadarViewProps> = ({
               </linearGradient>
             </defs>
             <line
-              x1={270}
-              y1={220}
-              x2={270 + beamTargetX}
-              y2={220 + beamTargetY}
+              x1={centerX}
+              y1={centerY}
+              x2={centerX + beamTargetX}
+              y2={centerY + beamTargetY}
               stroke="url(#target-beam-gradient)"
               strokeWidth="3"
               strokeDasharray="8 6"

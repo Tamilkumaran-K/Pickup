@@ -1,5 +1,5 @@
 import { WebSocket } from 'ws';
-import { SignalingMessage, Device, generatePairingPin, generateSecureToken } from '@pickup/shared';
+import { SignalingMessage, Device, generatePairingPin, generateSecureToken, isValidPairingPin, cleanPairingPin, formatPairingPin } from '@pickup/shared';
 import { PresenceManager } from './presence.js';
 import { PairingManager } from './pairingManager.js';
 
@@ -136,7 +136,10 @@ export class SignalingHandler {
         const session = this.presence.getSessionByWs(ws);
         if (!session) return;
 
-        const pin = generatePairingPin();
+        const requestedCode = msg.payload?.code as string | undefined;
+        const pin = (requestedCode && isValidPairingPin(requestedCode))
+          ? cleanPairingPin(requestedCode)
+          : generatePairingPin();
         const entry = this.pairing.registerCode(session.device, pin);
 
         ws.send(JSON.stringify({
@@ -145,7 +148,7 @@ export class SignalingHandler {
           targetId: session.device.id,
           payload: {
             code: entry.code,
-            formattedCode: `${entry.code.slice(0, 3)}-${entry.code.slice(3)}`,
+            formattedCode: formatPairingPin(entry.code),
             expiresAt: entry.expiresAt,
           },
           timestamp: Date.now(),

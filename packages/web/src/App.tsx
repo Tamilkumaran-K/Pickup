@@ -7,6 +7,8 @@ import {
   deriveKeyFromSecret,
   computeKeyFingerprint,
   cleanPairingPin,
+  generatePairingPin,
+  isValidPairingPin,
 } from '@pickup/shared';
 import { signalingClient } from './services/socket.js';
 import { webRtcManager } from './services/webrtc.js';
@@ -247,6 +249,16 @@ export function App() {
     };
   }, [selfDevice]);
 
+  // Support instant QR code link pairing: opening ?pair=123456 auto-opens pairing
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const pairCode = params.get('pair');
+    if (pairCode && isValidPairingPin(pairCode)) {
+      setIsPairingOpen(true);
+      handleSubmitPeerPin(cleanPairingPin(pairCode));
+    }
+  }, []);
+
   // Spawns a virtual simulated peer (e.g. MacBook Pro M3 or Pixel 8) for immediate interactive testing!
   const handleAddSimulatedDevice = () => {
     const names = ['MacBook Pro M3', 'Pixel 8 Pro', 'iPad Air', 'ThinkPad X1'];
@@ -269,11 +281,49 @@ export function App() {
   const handleOpenPairing = () => {
     sounds.playClick();
     setIsPairingOpen(true);
+    let codeToSend = myPinRef.current;
+    if (!codeToSend) {
+      const fresh = generatePairingPin();
+      setMyPin(fresh);
+      myPinRef.current = cleanPairingPin(fresh);
+      codeToSend = myPinRef.current;
+    }
     signalingClient.send({
       type: 'request-pair-code',
       senderId: selfDevice.id,
+      payload: { code: codeToSend },
       timestamp: Date.now(),
     });
+  };
+
+  const handleRegeneratePairingPin = () => {
+    const fresh = generatePairingPin();
+    setMyPin(fresh);
+    myPinRef.current = cleanPairingPin(fresh);
+    signalingClient.send({
+      type: 'request-pair-code',
+      senderId: selfDevice.id,
+      payload: { code: myPinRef.current },
+      timestamp: Date.now(),
+    });
+  };
+
+  const handlePairWithSimulatedDevice = () => {
+    sounds.playClick();
+    const simDevice: Device = {
+      id: `sim-phone-${Date.now()}`,
+      name: 'Pixel 8 Pro (Paired)',
+      platform: 'android',
+      lastSeen: Date.now(),
+      isPaired: true,
+    };
+    setDiscoveredDevices((prev) => [simDevice, ...prev.filter((d) => d.id !== simDevice.id)]);
+    setSelectedDevice(simDevice);
+    setPeerSecurityMap((prev) =>
+      new Map(prev).set(simDevice.id, { fingerprint: 'a7b9-4f21-99c0', verified: true })
+    );
+    sounds.playSuccess();
+    showToast(`Successfully paired with ${simDevice.name}!`, 'success');
   };
 
   const handleSubmitPeerPin = (pin: string) => {
@@ -611,6 +661,9 @@ export function App() {
         myPin={myPin}
         myDevice={selfDevice}
         onSubmitPin={handleSubmitPeerPin}
+        onRegeneratePin={handleRegeneratePairingPin}
+        onPairSimulated={handlePairWithSimulatedDevice}
+        isConnected={isConnected}
       />
 
       {/* Settings Modal */}
