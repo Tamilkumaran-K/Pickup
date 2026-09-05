@@ -127,8 +127,10 @@ export function createApp() {
 
   // 5. Serve static web app if built, or informative server status dashboard
   const candidateDistDirs = [
+    path.join(__dirname, '../web'),
     path.join(__dirname, '../../web/dist'),
     path.join(__dirname, '../../../web/dist'),
+    path.join(process.cwd(), 'packages/server/dist/web'),
     path.join(process.cwd(), 'packages/web/dist'),
     path.join(process.cwd(), 'dist'),
   ];
