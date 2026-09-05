@@ -114,15 +114,23 @@ export function createApp() {
     }
 
     const filePath = path.join(downloadsDir, filename);
-    if (fs.existsSync(filePath)) {
+    if (fs.existsSync(filePath) && fs.statSync(filePath).size > 100000) {
       res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
       res.setHeader('Content-Type', contentType);
       return res.sendFile(filePath);
     }
 
-    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
-    res.setHeader('Content-Type', contentType);
-    res.send(Buffer.from(`Pickup ${platform} release binary`));
+    return res.status(200).json({
+      status: 'info',
+      platform,
+      message: `Native ${platform} standalone installer is not hosted on this cloud instance.`,
+      instructions: {
+        windows: "Double-click 'Pickup-Windows.bat' in the project directory, or run 'npm run dev:desktop' to open the native Electron Windows client with background silent download support.",
+        android: "Open https://pickupbeta.vercel.app in Chrome on your Android device and tap '⋮ ➔ Add to Home screen' to install the zero-install PWA app instantly.",
+        ios: "Open the app in Safari on your iPhone and tap 'Share ➔ Add to Home Screen'.",
+      },
+      webAppUrl: 'https://pickupbeta.vercel.app',
+    });
   });
 
   // 5. Serve static web app if built, or informative server status dashboard

@@ -140,40 +140,23 @@ export const LandingHub: React.FC<LandingHubProps> = ({ onLaunchWebDrop }) => {
               <Laptop size={24} />
             </div>
             <h3 style={{ fontSize: 17, marginBottom: 4 }}>Windows</h3>
-            <p style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 16 }}>
-              Windows 10 / 11 • Native auto-save to ~/Downloads/Pickup
+            <p style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 12 }}>
+              Native Electron Desktop Client with silent auto-save to ~/Downloads/Pickup
             </p>
-            <a
-              id="download-windows-btn"
-              href="/api/download/windows"
-              download="Pickup-Windows-Setup.exe"
-              className="btn btn-secondary"
-              style={{ width: '100%', justifyContent: 'center', marginTop: 'auto', textDecoration: 'none' }}
-              onClick={() => sounds.playClick()}
-            >
-              <Download size={15} /> Download for Windows (.exe)
-            </a>
-          </div>
-
-          {/* macOS */}
-          <div className="platform-card">
-            <div className="platform-card-icon">
-              <Laptop size={24} style={{ color: 'var(--accent-purple)' }} />
+            <div style={{ fontSize: 11, color: 'var(--accent-cyan)', background: 'rgba(6, 182, 212, 0.08)', padding: '6px 10px', borderRadius: 8, marginBottom: 16, border: '1px solid rgba(6, 182, 212, 0.2)' }}>
+              Double-click <b>Pickup-Windows.bat</b> or run <code>npm run dev:desktop</code>
             </div>
-            <h3 style={{ fontSize: 17, marginBottom: 4 }}>macOS</h3>
-            <p style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 16 }}>
-              Apple Silicon &amp; Intel • Silent folder sync
-            </p>
-            <a
-              id="download-macos-btn"
-              href="/api/download/macos"
-              download="Pickup-macOS.dmg"
-              className="btn btn-secondary"
-              style={{ width: '100%', justifyContent: 'center', marginTop: 'auto', textDecoration: 'none' }}
-              onClick={() => sounds.playClick()}
+            <button
+              id="launch-windows-btn"
+              className="btn btn-primary"
+              style={{ width: '100%', justifyContent: 'center', marginTop: 'auto' }}
+              onClick={() => {
+                sounds.playClick();
+                onLaunchWebDrop();
+              }}
             >
-              <Download size={15} /> Download for macOS (.dmg)
-            </a>
+              Open Web Client on PC
+            </button>
           </div>
 
           {/* Android */}
@@ -182,38 +165,72 @@ export const LandingHub: React.FC<LandingHubProps> = ({ onLaunchWebDrop }) => {
               <Smartphone size={24} style={{ color: 'var(--accent-green)' }} />
             </div>
             <h3 style={{ fontSize: 17, marginBottom: 4 }}>Android</h3>
-            <p style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 16 }}>
-              Expo / React Native • Direct save to Gallery/Photos
+            <p style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 12 }}>
+              Zero-install PWA Web App • Direct save to Gallery &amp; Downloads
             </p>
-            <a
-              id="download-android-btn"
-              href="/api/download/android"
-              download="Pickup.apk"
+            <div style={{ fontSize: 11, color: 'var(--accent-green)', background: 'rgba(16, 185, 129, 0.08)', padding: '6px 10px', borderRadius: 8, marginBottom: 16, border: '1px solid rgba(16, 185, 129, 0.2)' }}>
+              In Chrome, tap <b>⋮ ➔ "Add to Home screen"</b> to install instantly without an APK!
+            </div>
+            <button
+              id="launch-android-btn"
               className="btn btn-secondary"
-              style={{ width: '100%', justifyContent: 'center', marginTop: 'auto', textDecoration: 'none' }}
-              onClick={() => sounds.playClick()}
+              style={{ width: '100%', justifyContent: 'center', marginTop: 'auto' }}
+              onClick={() => {
+                sounds.playClick();
+                onLaunchWebDrop();
+              }}
             >
-              <Download size={15} /> Download Android APK
-            </a>
+              Open Instant Android Web App
+            </button>
           </div>
 
-          {/* iOS */}
+          {/* iOS / iPhone */}
           <div className="platform-card">
             <div className="platform-card-icon">
               <Smartphone size={24} style={{ color: 'var(--accent-cyan)' }} />
             </div>
             <h3 style={{ fontSize: 17, marginBottom: 4 }}>iOS / iPhone</h3>
-            <p style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 16 }}>
-              App Store review in progress • Direct QR camera sync
+            <p style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 12 }}>
+              Safari PWA • Zero install • Instant camera QR sync
             </p>
+            <div style={{ fontSize: 11, color: 'var(--accent-cyan)', background: 'rgba(6, 182, 212, 0.08)', padding: '6px 10px', borderRadius: 8, marginBottom: 16, border: '1px solid rgba(6, 182, 212, 0.2)' }}>
+              In Safari, tap <b>Share ⎋ ➔ "Add to Home Screen"</b> for native fullscreen experience!
+            </div>
             <button
-              id="download-ios-btn"
+              id="launch-ios-btn"
               className="btn btn-secondary"
-              style={{ width: '100%', justifyContent: 'center', marginTop: 'auto', opacity: 0.6, cursor: 'not-allowed' }}
-              disabled
-              title="iOS App Store release in progress"
+              style={{ width: '100%', justifyContent: 'center', marginTop: 'auto' }}
+              onClick={() => {
+                sounds.playClick();
+                onLaunchWebDrop();
+              }}
             >
-              <Clock size={15} /> App Store (Publishing Soon)
+              Open Instant iPhone Web App
+            </button>
+          </div>
+
+          {/* macOS */}
+          <div className="platform-card">
+            <div className="platform-card-icon">
+              <Laptop size={24} style={{ color: 'var(--accent-purple)' }} />
+            </div>
+            <h3 style={{ fontSize: 17, marginBottom: 4 }}>macOS</h3>
+            <p style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 12 }}>
+              Apple Silicon &amp; Intel • Silent Finder auto-save
+            </p>
+            <div style={{ fontSize: 11, color: 'var(--accent-purple)', background: 'rgba(168, 85, 247, 0.08)', padding: '6px 10px', borderRadius: 8, marginBottom: 16, border: '1px solid rgba(168, 85, 247, 0.2)' }}>
+              Run <code>npm run dev:desktop</code> for the native Electron client on Mac
+            </div>
+            <button
+              id="launch-macos-btn"
+              className="btn btn-secondary"
+              style={{ width: '100%', justifyContent: 'center', marginTop: 'auto' }}
+              onClick={() => {
+                sounds.playClick();
+                onLaunchWebDrop();
+              }}
+            >
+              Open Web Client on Mac
             </button>
           </div>
 
@@ -224,14 +241,18 @@ export const LandingHub: React.FC<LandingHubProps> = ({ onLaunchWebDrop }) => {
             </div>
             <h3 style={{ fontSize: 17, marginBottom: 4 }}>Web Client</h3>
             <p style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 16 }}>
-              Zero install • Works in Chrome, Edge, Safari, Firefox
+              Zero install • Works on Chrome, Edge, Safari, Firefox, Android, and iOS
             </p>
             <button
+              id="launch-universal-btn"
               className="btn btn-primary"
               style={{ width: '100%', justifyContent: 'center', marginTop: 'auto' }}
-              onClick={onLaunchWebDrop}
+              onClick={() => {
+                sounds.playClick();
+                onLaunchWebDrop();
+              }}
             >
-              Open Web Drop Client
+              Launch Web Drop Now
             </button>
           </div>
         </div>

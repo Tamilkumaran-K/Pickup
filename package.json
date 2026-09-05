@@ -9,6 +9,8 @@
   "scripts": {
     "dev:server": "npm --prefix packages/server run dev",
     "dev:web": "npm --prefix packages/web run dev",
+    "dev:desktop": "npm --prefix packages/desktop run start",
+    "dev:mobile": "npm --prefix packages/mobile start",
     "dev": "npm run dev:server & npm run dev:web",
     "build:shared": "npm --prefix packages/shared run build",
     "build:server": "npm --prefix packages/server run build",
