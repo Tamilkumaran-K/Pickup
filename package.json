@@ -14,7 +14,7 @@
     "build:server": "npm --prefix packages/server run build",
     "build:desktop": "npm --prefix packages/desktop run build",
     "build:web": "npm --prefix packages/web run build",
-    "build": "npm run build:shared && npm run build:web && node -e \"const fs=require('fs');fs.cpSync('packages/web/dist','dist',{recursive:true})\"",
+    "build": "npm run build:shared && npm run build:web && node scripts/copy-dist.js",
     "build:all": "npm run build:shared && npm run build:server && npm run build:desktop && npm run build:web",
     "test:shared": "npm --prefix packages/shared test",
     "test:server": "npm --prefix packages/server test",
