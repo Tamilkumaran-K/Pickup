@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Device, generatePairingPin, cleanPairingPin, formatPairingPin, parseQrData, isValidPairingPin } from '@pickup/shared';
-import { X, QrCode, KeyRound, ShieldCheck, Check, RefreshCw, Share2, Camera, Sparkles, Smartphone, Copy, AlertCircle } from 'lucide-react';
+import { X, QrCode, KeyRound, ShieldCheck, Check, RefreshCw, Share2, Camera, Sparkles, Smartphone, Copy, AlertCircle, Wifi } from 'lucide-react';
 import { sounds } from '../services/soundEffects.js';
 import QRCode from 'qrcode';
+import jsQR from 'jsqr';
 
 interface PairingModalProps {
   isOpen: boolean;
@@ -37,19 +38,29 @@ export const PairingModal: React.FC<PairingModalProps> = ({
   const [digits, setDigits] = useState<string[]>(['', '', '', '', '', '']);
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
+  // Server LAN network URL state for phone connectivity
+  const [serverLanUrl, setServerLanUrl] = useState<string>('');
+
+  useEffect(() => {
+    fetch('/api/config')
+      .then((r) => r.json())
+      .then((cfg) => {
+        if (cfg?.lanUrl) {
+          setServerLanUrl(cfg.lanUrl);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
   // Camera QR Scanner state
   const [isScanning, setIsScanning] = useState(false);
   const [cameraError, setCameraError] = useState<string | null>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const mediaStreamRef = useRef<MediaStream | null>(null);
-  const scanIntervalRef = useRef<any>(null);
 
   // Stop camera helper
   const stopCamera = useCallback(() => {
-    if (scanIntervalRef.current) {
-      clearInterval(scanIntervalRef.current);
-      scanIntervalRef.current = null;
-    }
+    setIsScanning(false);
     if (mediaStreamRef.current) {
       mediaStreamRef.current.getTracks().forEach((track) => track.stop());
       mediaStreamRef.current = null;
@@ -58,6 +69,8 @@ export const PairingModal: React.FC<PairingModalProps> = ({
 
   // Process scanned camera value
   const processScannedValue = useCallback((scannedText: string) => {
+    if (!scannedText) return;
+
     // Check if it's a URL with ?pair=123456
     try {
       if (scannedText.includes('pair=')) {
@@ -95,6 +108,79 @@ export const PairingModal: React.FC<PairingModalProps> = ({
     }
   }, [onSubmitPin, onClose, stopCamera]);
 
+  // Robust universal Camera Scanner effect using jsQR
+  useEffect(() => {
+    if (!isScanning) return;
+    let localStream: MediaStream | null = null;
+    let localInterval: any = null;
+    let isMounted = true;
+
+    async function initCamera() {
+      try {
+        if (!navigator?.mediaDevices?.getUserMedia) {
+          throw new Error('Camera not supported in this browser. Please type the 6-digit PIN manually.');
+        }
+
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: {
+            facingMode: { ideal: 'environment' },
+            width: { ideal: 1280 },
+            height: { ideal: 720 },
+          },
+          audio: false,
+        });
+
+        if (!isMounted) {
+          stream.getTracks().forEach((t) => t.stop());
+          return;
+        }
+
+        localStream = stream;
+        mediaStreamRef.current = stream;
+
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+          videoRef.current.setAttribute('playsinline', 'true');
+          await videoRef.current.play().catch(() => {});
+        }
+
+        // Hidden canvas for continuous frame decoding
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d', { willReadFrequently: true });
+
+        localInterval = setInterval(() => {
+          if (!isMounted || !videoRef.current || videoRef.current.readyState < 2 || !ctx) return;
+          const v = videoRef.current;
+          const w = v.videoWidth;
+          const h = v.videoHeight;
+          if (w === 0 || h === 0) return;
+
+          canvas.width = w;
+          canvas.height = h;
+          ctx.drawImage(v, 0, 0, w, h);
+          const imageData = ctx.getImageData(0, 0, w, h);
+          const code = jsQR(imageData.data, w, h, { inversionAttempts: 'dontInvert' });
+
+          if (code && code.data) {
+            processScannedValue(code.data);
+          }
+        }, 180);
+      } catch (err: any) {
+        console.warn('Camera initialization error:', err);
+        setCameraError(err.message || 'Unable to access camera. Please allow camera permissions or enter PIN manually.');
+        setIsScanning(false);
+      }
+    }
+
+    initCamera();
+
+    return () => {
+      isMounted = false;
+      if (localInterval) clearInterval(localInterval);
+      if (localStream) localStream.getTracks().forEach((t) => t.stop());
+    };
+  }, [isScanning, processScannedValue]);
+
   // Handle pasted PIN code
   const handlePastedCode = useCallback((pasted: string) => {
     const clean = cleanPairingPin(pasted).slice(0, 6);
@@ -125,7 +211,13 @@ export const PairingModal: React.FC<PairingModalProps> = ({
   useEffect(() => {
     if (!isOpen) return;
     const activePin = cleanPairingPin(localPin);
-    const origin = typeof window !== 'undefined' ? window.location.origin : '';
+    let origin = typeof window !== 'undefined' ? window.location.origin : '';
+
+    // If running on localhost or desktop file protocol, use LAN IP so phones can connect directly
+    if (serverLanUrl && (origin.includes('localhost') || origin.includes('127.0.0.1') || origin.startsWith('file:') || !origin)) {
+      origin = serverLanUrl;
+    }
+
     const qrText = `${origin}/?pair=${activePin}`;
     
     QRCode.toDataURL(qrText, {
@@ -138,7 +230,7 @@ export const PairingModal: React.FC<PairingModalProps> = ({
     })
       .then((url) => setQrDataUrl(url))
       .catch((err) => console.warn('QR Code generation failed:', err));
-  }, [localPin, isOpen, myDevice]);
+  }, [localPin, isOpen, myDevice, serverLanUrl]);
 
   // Clean up camera stream if modal closes
   useEffect(() => {
@@ -241,43 +333,11 @@ export const PairingModal: React.FC<PairingModalProps> = ({
 
   const enteredPin = digits.join('');
 
-  // Camera QR Scanner Functions
-  const startCamera = async () => {
+  // Camera QR Scanner trigger
+  const startCamera = () => {
     sounds.playClick();
-    setIsScanning(true);
     setCameraError(null);
-
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: 'environment' },
-      });
-      mediaStreamRef.current = stream;
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        videoRef.current.play();
-      }
-
-      // Check if native BarcodeDetector API is supported
-      if ('BarcodeDetector' in window) {
-        const detector = new (window as any).BarcodeDetector({ formats: ['qr_code'] });
-        scanIntervalRef.current = setInterval(async () => {
-          if (!videoRef.current || videoRef.current.readyState < 2) return;
-          try {
-            const barcodes = await detector.detect(videoRef.current);
-            if (barcodes.length > 0) {
-              const raw = barcodes[0].rawValue;
-              processScannedValue(raw);
-            }
-          } catch {
-            // Frame detection pass
-          }
-        }, 300);
-      }
-    } catch (err: any) {
-      console.warn('Camera access error:', err);
-      setCameraError('Camera access unavailable. Please enter the 6-digit PIN manually.');
-      stopCamera();
-    }
+    setIsScanning(true);
   };
 
   return (
@@ -333,7 +393,7 @@ export const PairingModal: React.FC<PairingModalProps> = ({
               {qrDataUrl ? (
                 <div className="qr-code-wrapper">
                   <img src={qrDataUrl} alt="Pairing QR Code" className="qr-image" />
-                  <div className="qr-scan-badge">Scan with Camera</div>
+                  <div className="qr-scan-badge">Scan with Phone Camera</div>
                 </div>
               ) : (
                 <div style={{ height: 160, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -341,6 +401,41 @@ export const PairingModal: React.FC<PairingModalProps> = ({
                 </div>
               )}
             </div>
+
+            {/* Direct Phone Access URL Banner for Local Network */}
+            {serverLanUrl && (
+              <div style={{
+                fontSize: 12,
+                color: 'var(--accent-cyan)',
+                background: 'rgba(6, 182, 212, 0.08)',
+                padding: '8px 12px',
+                borderRadius: 10,
+                margin: '10px auto 14px',
+                maxWidth: 380,
+                border: '1px solid rgba(6, 182, 212, 0.2)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: 8,
+              }}>
+                <div style={{ textAlign: 'left', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <Wifi size={14} style={{ flexShrink: 0 }} />
+                  <span>On phone browser: <b>{serverLanUrl}</b></span>
+                </div>
+                <button
+                  className="btn btn-secondary"
+                  style={{ padding: '3px 8px', fontSize: 11, minHeight: 26, flexShrink: 0 }}
+                  onClick={() => {
+                    sounds.playClick();
+                    navigator.clipboard.writeText(`${serverLanUrl}/?pair=${paddedPin}`);
+                    setCopied(true);
+                    setTimeout(() => setCopied(false), 2000);
+                  }}
+                >
+                  Copy URL
+                </button>
+              </div>
+            )}
 
             <p style={{ fontSize: 13, color: 'var(--text-secondary)', margin: '14px 0 10px' }}>
               Or enter this 6-digit PIN on your other phone or computer:

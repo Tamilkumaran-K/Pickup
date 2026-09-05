@@ -4,6 +4,7 @@ import { WebSocketServer } from 'ws';
 import cors from 'cors';
 import path from 'path';
 import fs from 'fs';
+import os from 'os';
 import { fileURLToPath } from 'url';
 import { PresenceManager } from './presence.js';
 import { PairingManager } from './pairingManager.js';
@@ -12,6 +13,19 @@ import { securityHeaders, MemoryRateLimiter } from './security.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+export function getLocalLanIps(): string[] {
+  const interfaces = os.networkInterfaces();
+  const ips: string[] = [];
+  for (const name of Object.keys(interfaces)) {
+    for (const net of interfaces[name] || []) {
+      if (net.family === 'IPv4' && !net.internal) {
+        ips.push(net.address);
+      }
+    }
+  }
+  return ips;
+}
 
 export function createApp() {
   const app = express();
@@ -77,11 +91,20 @@ export function createApp() {
     });
   });
 
-  app.get('/api/config', (_req, res) => {
+  app.get('/api/config', (req, res) => {
+    const lanIps = getLocalLanIps();
+    const hostHeader = req.get('host') || 'localhost:3001';
+    const port = hostHeader.includes(':') ? hostHeader.split(':')[1] : '3001';
+    const primaryIp = lanIps.find((ip) => !ip.startsWith('169.254')) || '127.0.0.1';
+    const lanUrl = `http://${primaryIp}:${port}`;
+
     res.json({
       iceServers,
       chunkSize: 64 * 1024,
       version: '1.0.0',
+      lanIps,
+      lanUrl,
+      lanUrls: lanIps.map((ip) => `http://${ip}:${port}`),
     });
   });
 
@@ -268,6 +291,10 @@ export function startServer(port = 3001): Promise<{ server: http.Server; port: n
       const addr = server.address();
       const actualPort = typeof addr === 'object' && addr ? addr.port : port;
       console.log(`[Pickup Server] Listening on http://localhost:${actualPort} (WebSocket on /ws)`);
+      const lanIps = getLocalLanIps();
+      lanIps.forEach((ip) => {
+        console.log(`[Pickup Server] 📱 Mobile/LAN URL: http://${ip}:${actualPort}`);
+      });
       resolve({ server, port: actualPort, cleanup });
     });
   });

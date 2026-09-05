@@ -570,6 +570,40 @@ export function App() {
       <main style={{ flex: 1 }}>
         {viewMode === 'radar' || isDesktop ? (
           <div>
+            {/* Server Disconnection / Cloud Mode Notice */}
+            {!isConnected && (
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  padding: '12px 18px',
+                  borderRadius: 14,
+                  background: 'rgba(239, 68, 68, 0.1)',
+                  border: '1px solid rgba(239, 68, 68, 0.3)',
+                  marginBottom: 16,
+                  fontSize: 13,
+                  color: '#FCA5A5',
+                  gap: 12,
+                  flexWrap: 'wrap',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <AlertCircle size={18} style={{ color: '#EF4444', flexShrink: 0 }} />
+                  <div>
+                    <b>Server Disconnected / Cloud Mode:</b> Open Pickup directly on your computer, or enter your laptop's WiFi address (e.g. <code>http://10.139.134.36:3001</code>) to see your devices on the radar.
+                  </div>
+                </div>
+                <button
+                  className="btn btn-secondary"
+                  style={{ padding: '6px 12px', fontSize: 12, minHeight: 30 }}
+                  onClick={() => setIsSettingsOpen(true)}
+                >
+                  Configure Server Address
+                </button>
+              </div>
+            )}
+
             {/* Top Info Banner */}
             <div
               style={{

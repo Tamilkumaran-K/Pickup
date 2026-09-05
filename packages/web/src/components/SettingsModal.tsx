@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { autoSaveManager } from '../services/autoSave.js';
-import { Settings, Folder, Shield, X, Check, Laptop } from 'lucide-react';
+import { Settings, Folder, Shield, X, Check, Laptop, Server, Wifi } from 'lucide-react';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -22,6 +22,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   const [nameInput, setNameInput] = useState(deviceName);
   const [savedFolder, setSavedFolder] = useState(autoSaveManager.getDirectoryName());
   const [hasCustomFolder, setHasCustomFolder] = useState(autoSaveManager.hasCustomDirectory());
+  const [serverInput, setServerInput] = useState(() => localStorage.getItem('dropflow-server-url') || '');
+  const [serverSaved, setServerSaved] = useState(false);
 
   React.useEffect(() => {
     setNameInput(deviceName);
@@ -49,6 +51,31 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     }
   };
 
+  const handleSaveServer = () => {
+    let clean = serverInput.trim();
+    if (clean) {
+      if (!clean.startsWith('ws://') && !clean.startsWith('wss://')) {
+        const protocol = clean.startsWith('https') ? 'wss:' : 'ws:';
+        clean = clean.replace(/^https?:\/\//, '');
+        if (!clean.endsWith('/ws')) {
+          clean = clean.replace(/\/$/, '') + '/ws';
+        }
+        clean = `${protocol}//${clean}`;
+      }
+      localStorage.setItem('dropflow-server-url', clean);
+      setServerSaved(true);
+      setTimeout(() => {
+        window.location.reload();
+      }, 600);
+    } else {
+      localStorage.removeItem('dropflow-server-url');
+      setServerSaved(true);
+      setTimeout(() => {
+        window.location.reload();
+      }, 600);
+    }
+  };
+
   return (
     <div className="modal-backdrop" onClick={onClose}>
       <div className="modal-content" onClick={(e) => e.stopPropagation()} id="settings-modal-content">
@@ -66,7 +93,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
         </div>
 
         {/* Device Name */}
-        <div style={{ marginBottom: 24 }}>
+        <div style={{ marginBottom: 20 }}>
           <label style={{ fontSize: 13, color: 'var(--text-secondary)', display: 'block', marginBottom: 8 }}>
             Device Display Name
           </label>
@@ -88,6 +115,38 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             />
             <button className="btn btn-secondary" onClick={handleSaveName}>
               Save
+            </button>
+          </div>
+        </div>
+
+        {/* Signaling Server / Laptop Address */}
+        <div style={{ marginBottom: 20, padding: '16px', background: 'rgba(255,255,255,0.03)', borderRadius: 14, border: '1px solid var(--border-subtle)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
+            <Server size={18} style={{ color: 'var(--accent-cyan)' }} />
+            <div style={{ fontWeight: 600, fontSize: 14 }}>Signaling Server / Laptop Address</div>
+          </div>
+          <p style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 12 }}>
+            To connect phone and laptop across your WiFi network, enter your laptop's address (e.g. <code>http://10.139.134.36:3001</code>).
+          </p>
+          <div style={{ display: 'flex', gap: 10 }}>
+            <input
+              type="text"
+              placeholder="e.g. http://10.139.134.36:3001"
+              value={serverInput}
+              onChange={(e) => setServerInput(e.target.value)}
+              style={{
+                flex: 1,
+                padding: '10px 14px',
+                borderRadius: 10,
+                background: 'rgba(255, 255, 255, 0.05)',
+                border: '1px solid var(--border-subtle)',
+                color: '#FFF',
+                fontSize: 13,
+                outline: 'none',
+              }}
+            />
+            <button className="btn btn-secondary" onClick={handleSaveServer}>
+              {serverSaved ? 'Connecting...' : 'Connect'}
             </button>
           </div>
         </div>
