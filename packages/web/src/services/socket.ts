@@ -23,11 +23,25 @@ class SignalingClient {
       return;
     }
 
-    const loc = window.location;
-    const protocol = loc.protocol === 'https:' ? 'wss:' : 'ws:';
-    // If running in standalone Electron via file://, connect directly to port 3001
-    const host = loc.protocol === 'file:' || !loc.host ? 'localhost:3001' : loc.host;
-    const wsUrl = `${protocol}//${host}/ws`;
+    const envUrl = (import.meta as any).env?.VITE_SIGNALING_URL;
+    const savedUrl = localStorage.getItem('dropflow-server-url');
+    const params = new URLSearchParams(window.location.search);
+    const queryUrl = params.get('server');
+
+    let wsUrl: string;
+    if (queryUrl) {
+      wsUrl = queryUrl;
+    } else if (savedUrl) {
+      wsUrl = savedUrl;
+    } else if (envUrl) {
+      wsUrl = envUrl;
+    } else {
+      const loc = window.location;
+      const protocol = loc.protocol === 'https:' ? 'wss:' : 'ws:';
+      // If running in standalone Electron via file://, connect directly to port 3001
+      const host = loc.protocol === 'file:' || !loc.host ? 'localhost:3001' : loc.host;
+      wsUrl = `${protocol}//${host}/ws`;
+    }
 
     this.ws = new WebSocket(wsUrl);
 

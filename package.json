@@ -10,10 +10,15 @@
     "dev:server": "npm --prefix packages/server run dev",
     "dev:web": "npm --prefix packages/web run dev",
     "dev": "npm run dev:server & npm run dev:web",
+    "build:shared": "npm --prefix packages/shared run build",
+    "build:server": "npm --prefix packages/server run build",
+    "build:desktop": "npm --prefix packages/desktop run build",
+    "build:web": "npm --prefix packages/web run build",
+    "build": "npm run build:shared && npm run build:web",
+    "build:all": "npm run build:shared && npm run build:server && npm run build:desktop && npm run build:web",
     "test:shared": "npm --prefix packages/shared test",
     "test:server": "npm --prefix packages/server test",
-    "test": "npm run test:shared && npm run test:server",
-    "build": "npm run build --workspaces --if-present"
+    "test": "npm run test:shared && npm run test:server"
   },
   "keywords": [
     "file-drop",

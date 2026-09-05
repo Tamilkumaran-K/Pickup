@@ -5,6 +5,7 @@
   "description": "DropFlow Native Desktop Client for Windows & macOS with Zero-Click Auto-Save",
   "main": "./dist/main.js",
   "scripts": {
+    "prebuild": "npm --prefix ../shared run build",
     "build": "tsc",
     "start": "tsc && electron dist/main.js"
   },

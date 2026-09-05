@@ -13,6 +13,7 @@
   },
   "scripts": {
     "build": "tsc",
+    "prepare": "tsc",
     "test": "node --test dist/test/shared.test.js dist/test/security.test.js",
     "test:source": "node --test --loader ts-node/esm test/shared.test.ts"
   },
