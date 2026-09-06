@@ -10,7 +10,7 @@ import {
   generatePairingPin,
   isValidPairingPin,
 } from '@pickup/shared';
-import { signalingClient } from './services/socket.js';
+import { signalingClient, ConnectionMode, isLocalEnvironment } from './services/socket.js';
 import { webRtcManager } from './services/webrtc.js';
 import { sounds } from './services/soundEffects.js';
 import { RadarView } from './components/RadarView.js';
@@ -32,6 +32,10 @@ import {
   Volume2,
   VolumeX,
   Monitor,
+  Globe,
+  X,
+  Server,
+  RefreshCw,
 } from 'lucide-react';
 
 function detectPlatform(): DevicePlatform {
@@ -87,6 +91,12 @@ export function App() {
   const [e2eEnabled, setE2eEnabled] = useState(true);
   const [toastMessage, setToastMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
   const [isConnected, setIsConnected] = useState(false);
+  const [connectionMode, setConnectionMode] = useState<ConnectionMode>(() =>
+    signalingClient.getConnectionMode()
+  );
+  const [cloudNoticeDismissed, setCloudNoticeDismissed] = useState<boolean>(() => {
+    return localStorage.getItem('dropflow-cloud-notice-dismissed') === 'true';
+  });
 
   const showToast = (text: string, type: 'success' | 'error' = 'success') => {
     setToastMessage({ text, type });
@@ -154,6 +164,9 @@ export function App() {
 
     const unsubConnection = signalingClient.on('connection-change', (msg: any) => {
       setIsConnected(!!msg.payload?.connected);
+      if (msg.payload?.mode) {
+        setConnectionMode(msg.payload.mode);
+      }
     });
 
     const unsubDeviceList = signalingClient.on('device-list', (msg) => {
@@ -471,12 +484,26 @@ export function App() {
                   width: 7,
                   height: 7,
                   borderRadius: '50%',
-                  background: isConnected ? 'var(--accent-green)' : 'var(--accent-amber)',
-                  boxShadow: isConnected ? '0 0 8px var(--accent-green)' : 'none',
+                  background: isConnected
+                    ? 'var(--accent-green)'
+                    : connectionMode === 'cloud-web-p2p'
+                    ? 'var(--accent-cyan)'
+                    : 'var(--accent-amber)',
+                  boxShadow: isConnected
+                    ? '0 0 8px var(--accent-green)'
+                    : connectionMode === 'cloud-web-p2p'
+                    ? '0 0 8px var(--accent-cyan)'
+                    : 'none',
                   marginRight: 6,
                 }}
               />
-              {isConnected ? 'Local P2P Active' : 'Connecting to local mesh...'}
+              {isConnected
+                ? 'Mesh Connected'
+                : connectionMode === 'cloud-web-p2p'
+                ? 'Web P2P Active'
+                : connectionMode === 'disconnected'
+                ? 'Local Node Offline'
+                : 'Connecting to mesh...'}
             </div>
           </div>
         </div>
@@ -570,8 +597,8 @@ export function App() {
       <main style={{ flex: 1 }}>
         {viewMode === 'radar' || isDesktop ? (
           <div>
-            {/* Server Disconnection / Cloud Mode Notice */}
-            {!isConnected && (
+            {/* Cloud Web Mode Guidance or Local Offline Notice */}
+            {!isConnected && !cloudNoticeDismissed && (
               <div
                 style={{
                   display: 'flex',
@@ -579,28 +606,60 @@ export function App() {
                   justifyContent: 'space-between',
                   padding: '12px 18px',
                   borderRadius: 14,
-                  background: 'rgba(239, 68, 68, 0.1)',
-                  border: '1px solid rgba(239, 68, 68, 0.3)',
+                  background: connectionMode === 'cloud-web-p2p' ? 'rgba(6, 182, 212, 0.07)' : 'rgba(245, 158, 11, 0.08)',
+                  border: connectionMode === 'cloud-web-p2p' ? '1px solid rgba(6, 182, 212, 0.25)' : '1px solid rgba(245, 158, 11, 0.25)',
                   marginBottom: 16,
                   fontSize: 13,
-                  color: '#FCA5A5',
+                  color: connectionMode === 'cloud-web-p2p' ? '#E0F2FE' : '#FEF3C7',
                   gap: 12,
                   flexWrap: 'wrap',
                 }}
               >
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <AlertCircle size={18} style={{ color: '#EF4444', flexShrink: 0 }} />
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1, minWidth: 260 }}>
+                  {connectionMode === 'cloud-web-p2p' ? (
+                    <Globe size={18} style={{ color: 'var(--accent-cyan)', flexShrink: 0 }} />
+                  ) : (
+                    <AlertCircle size={18} style={{ color: 'var(--accent-amber)', flexShrink: 0 }} />
+                  )}
                   <div>
-                    <b>Server Disconnected / Cloud Mode:</b> Open Pickup directly on your computer, or enter your laptop's WiFi address (e.g. <code>http://10.139.134.36:3001</code>) to see your devices on the radar.
+                    {connectionMode === 'cloud-web-p2p' ? (
+                      <>
+                        <b>Web P2P Mode Active:</b> Direct zero-click transfers via WebRTC. Click <b>Pair Device</b> to connect phones or laptops with a 6-digit PIN or QR code.
+                      </>
+                    ) : (
+                      <>
+                        <b>Local Desktop Node Offline:</b> Start <code>Pickup-Windows.bat</code> on your PC to enable instant LAN subnet discovery.
+                      </>
+                    )}
                   </div>
                 </div>
-                <button
-                  className="btn btn-secondary"
-                  style={{ padding: '6px 12px', fontSize: 12, minHeight: 30 }}
-                  onClick={() => setIsSettingsOpen(true)}
-                >
-                  Configure Server Address
-                </button>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <button
+                    className="btn btn-primary"
+                    style={{ padding: '6px 12px', fontSize: 12, minHeight: 30, display: 'flex', alignItems: 'center', gap: 5 }}
+                    onClick={handleOpenPairing}
+                  >
+                    <KeyRound size={13} /> Pair Device
+                  </button>
+                  <button
+                    className="btn btn-secondary"
+                    style={{ padding: '6px 12px', fontSize: 12, minHeight: 30, display: 'flex', alignItems: 'center', gap: 5 }}
+                    onClick={() => setIsSettingsOpen(true)}
+                  >
+                    <Server size={13} /> Link PC Node
+                  </button>
+                  <button
+                    className="btn btn-secondary"
+                    style={{ padding: '6px 8px', fontSize: 12, minHeight: 30, borderRadius: '50%' }}
+                    title="Dismiss notice"
+                    onClick={() => {
+                      localStorage.setItem('dropflow-cloud-notice-dismissed', 'true');
+                      setCloudNoticeDismissed(true);
+                    }}
+                  >
+                    <X size={14} />
+                  </button>
+                </div>
               </div>
             )}
 
@@ -622,7 +681,7 @@ export function App() {
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <Wifi size={15} className="pulse-cyan" style={{ color: 'var(--accent-cyan)' }} />
                 <span>
-                  <b>Subnet Radar Active:</b> Click any device orb or drop files to sync zero-click.
+                  <b>{isConnected ? 'Subnet Radar Active:' : 'Web P2P Radar Active:'}</b> Click any device orb or drop files to sync zero-click.
                 </span>
               </div>
               {selectedDevice && peerSecurityMap.has(selectedDevice.id) ? (

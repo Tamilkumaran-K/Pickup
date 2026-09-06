@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: pickup-server
+    runtime: node
+    plan: free
+    buildCommand: npm install && npm run build:shared && npm run build:server
+    startCommand: npm --prefix packages/server start
+    envVars:
+      - key: NODE_ENV
+        value: production

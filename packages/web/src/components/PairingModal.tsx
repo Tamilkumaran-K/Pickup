@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Device, generatePairingPin, cleanPairingPin, formatPairingPin, parseQrData, isValidPairingPin } from '@pickup/shared';
-import { X, QrCode, KeyRound, ShieldCheck, Check, RefreshCw, Share2, Camera, Sparkles, Smartphone, Copy, AlertCircle, Wifi } from 'lucide-react';
+import { X, QrCode, KeyRound, ShieldCheck, Check, RefreshCw, Share2, Camera, Sparkles, Smartphone, Copy, AlertCircle, Wifi, Globe } from 'lucide-react';
 import { sounds } from '../services/soundEffects.js';
 import QRCode from 'qrcode';
 import jsQR from 'jsqr';
@@ -402,8 +402,8 @@ export const PairingModal: React.FC<PairingModalProps> = ({
               )}
             </div>
 
-            {/* Direct Phone Access URL Banner for Local Network */}
-            {serverLanUrl && (
+            {/* Direct Phone Access URL Banner for Local Network or Cloud Web */}
+            {serverLanUrl ? (
               <div style={{
                 fontSize: 12,
                 color: 'var(--accent-cyan)',
@@ -433,6 +433,33 @@ export const PairingModal: React.FC<PairingModalProps> = ({
                   }}
                 >
                   Copy URL
+                </button>
+              </div>
+            ) : (
+              <div style={{
+                fontSize: 12,
+                color: 'var(--accent-cyan)',
+                background: 'rgba(6, 182, 212, 0.08)',
+                padding: '8px 12px',
+                borderRadius: 10,
+                margin: '10px auto 14px',
+                maxWidth: 380,
+                border: '1px solid rgba(6, 182, 212, 0.2)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: 8,
+              }}>
+                <div style={{ textAlign: 'left', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <Globe size={14} style={{ flexShrink: 0 }} />
+                  <span>Scan with phone camera or share instant link</span>
+                </div>
+                <button
+                  className="btn btn-secondary"
+                  style={{ padding: '3px 8px', fontSize: 11, minHeight: 26, flexShrink: 0 }}
+                  onClick={handleShare}
+                >
+                  {shared ? 'Shared!' : 'Share Link'}
                 </button>
               </div>
             )}

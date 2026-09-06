@@ -121,17 +121,34 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
         {/* Signaling Server / Laptop Address */}
         <div style={{ marginBottom: 20, padding: '16px', background: 'rgba(255,255,255,0.03)', borderRadius: 14, border: '1px solid var(--border-subtle)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
-            <Server size={18} style={{ color: 'var(--accent-cyan)' }} />
-            <div style={{ fontWeight: 600, fontSize: 14 }}>Signaling Server / Laptop Address</div>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <Server size={18} style={{ color: 'var(--accent-cyan)' }} />
+              <div style={{ fontWeight: 600, fontSize: 14 }}>Signaling Server / Desktop Link</div>
+            </div>
+            {serverInput && (
+              <button
+                type="button"
+                className="btn btn-secondary"
+                style={{ padding: '3px 8px', fontSize: 11 }}
+                onClick={() => {
+                  setServerInput('');
+                  localStorage.removeItem('dropflow-server-url');
+                  setServerSaved(true);
+                  setTimeout(() => window.location.reload(), 500);
+                }}
+              >
+                Reset to Web P2P
+              </button>
+            )}
           </div>
           <p style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 12 }}>
-            To connect phone and laptop across your WiFi network, enter your laptop's address (e.g. <code>http://10.139.134.36:3001</code>).
+            To link your mobile phone with your computer over WiFi, or to connect to a custom relay server, enter the address below (or scan your laptop's pairing QR code).
           </p>
-          <div style={{ display: 'flex', gap: 10 }}>
+          <div style={{ display: 'flex', gap: 10, marginBottom: 10 }}>
             <input
               type="text"
-              placeholder="e.g. http://10.139.134.36:3001"
+              placeholder="e.g. http://192.168.1.15:3001 or wss://server.onrender.com/ws"
               value={serverInput}
               onChange={(e) => setServerInput(e.target.value)}
               style={{
@@ -146,7 +163,17 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               }}
             />
             <button className="btn btn-secondary" onClick={handleSaveServer}>
-              {serverSaved ? 'Connecting...' : 'Connect'}
+              {serverSaved ? 'Saving...' : 'Connect'}
+            </button>
+          </div>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            <button
+              type="button"
+              className="btn btn-secondary"
+              style={{ padding: '4px 10px', fontSize: 11, borderRadius: 6 }}
+              onClick={() => setServerInput('http://localhost:3001')}
+            >
+              Preset: Localhost (:3001)
             </button>
           </div>
         </div>
