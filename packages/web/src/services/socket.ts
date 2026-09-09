@@ -61,6 +61,17 @@ class SignalingClient {
     if (envUrl) return { url: envUrl, isExplicit: true };
 
     const loc = window.location;
+    // When hosted on static platforms (e.g. Vercel, Netlify, GitHub Pages), connect directly to cloud relay
+    if (!isLocalEnvironment()) {
+      const isStaticHost =
+        loc.host.includes('vercel.app') ||
+        loc.host.includes('netlify.app') ||
+        loc.host.includes('github.io');
+      if (isStaticHost) {
+        return { url: 'wss://pickup-server.onrender.com/ws', isExplicit: false };
+      }
+    }
+
     const protocol = loc.protocol === 'https:' ? 'wss:' : 'ws:';
     // If running in standalone Electron via file://, connect directly to port 3001
     const host = loc.protocol === 'file:' || !loc.host ? 'localhost:3001' : loc.host;

@@ -416,7 +416,7 @@ export function App() {
         isOpen: true,
         status: 'error',
         peerDevice: pairingTargetDevice,
-        errorReason: 'Pairing handshake timed out. Ensure both devices are connected to the same Wi-Fi network and try again.',
+        errorReason: 'Pairing handshake timed out. Check that both devices have an active internet connection and that the 6-digit PIN matches.',
       });
     }, 12000);
 
@@ -696,10 +696,10 @@ export function App() {
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <Wifi size={15} className="pulse-cyan" style={{ color: 'var(--accent-cyan)', flexShrink: 0 }} />
                 <span>
-                  <b>Same-Network Discovery Active:</b>{' '}
+                  <b>Radar Active:</b>{' '}
                   {discoveredDevices.length > 0
-                    ? `${discoveredDevices.length} device${discoveredDevices.length > 1 ? 's' : ''} connected on this Wi-Fi network`
-                    : 'Any device on this Wi-Fi network appears automatically with zero configuration.'}
+                    ? `${discoveredDevices.length} device${discoveredDevices.length > 1 ? 's' : ''} connected (Local Wi-Fi or Remote Paired)`
+                    : 'Local Wi-Fi peers auto-discovered • Remote devices connect via 6-digit Pair Mode'}
                 </span>
               </div>
               {selectedDevice && peerSecurityMap.has(selectedDevice.id) ? (

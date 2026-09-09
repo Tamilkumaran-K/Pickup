@@ -143,7 +143,7 @@ export const RadarView: React.FC<RadarViewProps> = ({
                 sounds.playClick();
                 onSelectDevice(device);
               }}
-              title={`Click to select ${device.name} as transfer target`}
+              title={device.isPaired ? `Paired device: ${device.name} (Cross-Network P2P)` : `Local Wi-Fi peer: ${device.name}`}
             >
               <div className="peer-node-bubble">
                 {isSelected && (
@@ -154,10 +154,10 @@ export const RadarView: React.FC<RadarViewProps> = ({
                 <div className="peer-icon-wrapper">
                   {getPlatformIcon(device.platform)}
                 </div>
-                <span className="peer-status-dot" title="Online on WiFi" />
+                <span className="peer-status-dot" title={device.isPaired ? 'Paired & Online' : 'Online on Wi-Fi'} />
 
                 {device.isPaired && (
-                  <div className="peer-shield-badge" title="Trusted & Paired Device">
+                  <div className="peer-shield-badge" title="Trusted & Paired Device (Cross-Network E2EE)">
                     <ShieldCheck size={13} />
                   </div>
                 )}
@@ -175,10 +175,10 @@ export const RadarView: React.FC<RadarViewProps> = ({
           <div className="radar-status-text" id="radar-network-status">
             <Wifi size={13} className="pulse-cyan" />
             <span>
-              <b>Same Network Active:</b>{' '}
+              <b>Radar Active:</b>{' '}
               {discoveredDevices.length > 0
-                ? `${discoveredDevices.length} device${discoveredDevices.length > 1 ? 's' : ''} discovered nearby (zero-config)`
-                : 'Zero-config active. Open Pickup on any device on this Wi-Fi to connect.'}
+                ? `${discoveredDevices.length} device${discoveredDevices.length > 1 ? 's' : ''} connected (Wi-Fi auto-discovered or paired cross-network)`
+                : 'Local Wi-Fi devices appear automatically. Remote devices connect anytime via 6-digit Pair Mode.'}
             </span>
           </div>
 

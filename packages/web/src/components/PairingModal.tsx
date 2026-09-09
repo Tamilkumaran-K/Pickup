@@ -400,6 +400,29 @@ export const PairingModal: React.FC<PairingModalProps> = ({
           </div>
         )}
 
+        {/* Cross-Network Pairing Guidance Banner */}
+        <div
+          id="cross-network-pairing-banner"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 10,
+            padding: '10px 14px',
+            borderRadius: 12,
+            background: 'rgba(6, 182, 212, 0.08)',
+            border: '1px solid rgba(6, 182, 212, 0.25)',
+            marginBottom: 16,
+            fontSize: 12,
+            color: '#E0F2FE',
+            lineHeight: 1.4,
+          }}
+        >
+          <Globe size={18} style={{ color: 'var(--accent-cyan)', flexShrink: 0 }} />
+          <div>
+            <b>Cross-Device &amp; Remote Pairing:</b> Devices do <i>not</i> need to be on the same Wi-Fi. Connect across different networks, mobile data, or remote locations.
+          </div>
+        </div>
+
         {/* Tab switch */}
         <div className="pairing-tabs">
           <button
@@ -503,7 +526,7 @@ export const PairingModal: React.FC<PairingModalProps> = ({
             )}
 
             <p style={{ fontSize: 13, color: 'var(--text-secondary)', margin: '14px 0 10px' }}>
-              Or enter this 6-digit PIN on your other phone or computer:
+              Enter this 6-digit PIN on any other device (local Wi-Fi, remote network, or mobile data):
             </p>
 
             {/* Instant High-Legibility PIN Display */}
@@ -554,14 +577,14 @@ export const PairingModal: React.FC<PairingModalProps> = ({
             <div className="pairing-security-badge">
               <ShieldCheck size={18} style={{ color: 'var(--accent-cyan)', flexShrink: 0 }} />
               <div>
-                <b>Zero-Knowledge E2EE:</b> Keys are negotiated peer-to-peer. Unpaired devices on your WiFi cannot intercept your files.
+                <b>Zero-Knowledge E2EE:</b> Keys are negotiated peer-to-peer (AES-256-GCM). Works securely across local Wi-Fi and remote networks.
               </div>
             </div>
           </div>
         ) : (
           <div>
             <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 14 }}>
-              Enter the 6-digit code shown on your other device:
+              Enter the 6-digit code shown on the other device (works across any network or location):
             </p>
 
             {/* 6 Individual Interactive PIN Input Boxes */}

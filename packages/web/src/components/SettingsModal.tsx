@@ -146,7 +146,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           {showAdvancedNetwork && (
             <div style={{ marginTop: 14, paddingTop: 12, borderTop: '1px solid rgba(255,255,255,0.06)' }}>
               <p style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 12 }}>
-                Devices on the same Wi-Fi connect automatically. You only need to set a custom address if self-hosting a dedicated signaling node.
+                Devices on the same Wi-Fi connect automatically, while remote devices connect via 6-digit Pair Mode. You only need to set a custom address if self-hosting a dedicated signaling node.
               </p>
               <div style={{ display: 'flex', gap: 10, marginBottom: 10 }}>
                 <input

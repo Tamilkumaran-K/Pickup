@@ -77,7 +77,7 @@ export const ConnectionResultModal: React.FC<ConnectionResultModalProps> = ({
 
             <h2 className="result-title">Connected Successfully!</h2>
             <p className="result-subtitle">
-              Your device is now securely paired and verified. You can transfer files, photos, and media back and forth with zero limits.
+              Your device is now securely paired across networks. You can transfer files, photos, and media back and forth from anywhere in the world.
             </p>
 
             {/* Paired Device Info Card */}
@@ -90,7 +90,7 @@ export const ConnectionResultModal: React.FC<ConnectionResultModalProps> = ({
                   <div className="paired-device-name">{peerDevice.name}</div>
                   <div className="paired-device-badges">
                     <span className="badge badge-network">
-                      <Wifi size={12} /> Local Network
+                      <Globe size={12} /> Cross-Device P2P
                     </span>
                     <span className="badge badge-encrypted">
                       <ShieldCheck size={12} /> E2EE AES-256
@@ -146,7 +146,7 @@ export const ConnectionResultModal: React.FC<ConnectionResultModalProps> = ({
                 {errorReason || 'The 6-digit code was invalid, expired, or the peer was not found.'}
               </div>
               <div className="error-suggestion">
-                💡 <b>Tip:</b> Check the 6-digit code currently shown on the other device and verify both devices are on the same Wi-Fi network.
+                💡 <b>Tip:</b> Check the 6-digit code currently shown on the other device and verify both devices have an active internet connection.
               </div>
             </div>
 
