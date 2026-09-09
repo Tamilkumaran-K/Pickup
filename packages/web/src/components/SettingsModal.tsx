@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { autoSaveManager } from '../services/autoSave.js';
-import { Settings, Folder, Shield, X, Check, Laptop, Server, Wifi } from 'lucide-react';
+import { Settings, Folder, Shield, X, Check, Laptop, Server, Wifi, ChevronDown, ChevronUp } from 'lucide-react';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -24,6 +24,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   const [hasCustomFolder, setHasCustomFolder] = useState(autoSaveManager.hasCustomDirectory());
   const [serverInput, setServerInput] = useState(() => localStorage.getItem('dropflow-server-url') || '');
   const [serverSaved, setServerSaved] = useState(false);
+  const [showAdvancedNetwork, setShowAdvancedNetwork] = useState(false);
 
   React.useEffect(() => {
     setNameInput(deviceName);
@@ -119,63 +120,82 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           </div>
         </div>
 
-        {/* Signaling Server / Laptop Address */}
-        <div style={{ marginBottom: 20, padding: '16px', background: 'rgba(255,255,255,0.03)', borderRadius: 14, border: '1px solid var(--border-subtle)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+        {/* Advanced Network Configuration (Collapsible for Power Users/Devs only) */}
+        <div style={{ marginBottom: 20, padding: '14px 16px', background: 'rgba(255,255,255,0.02)', borderRadius: 14, border: '1px solid var(--border-subtle)' }}>
+          <div
+            style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', userSelect: 'none' }}
+            onClick={() => setShowAdvancedNetwork(!showAdvancedNetwork)}
+          >
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <Server size={18} style={{ color: 'var(--accent-cyan)' }} />
-              <div style={{ fontWeight: 600, fontSize: 14 }}>Signaling Server / Desktop Link</div>
+              <Server size={17} style={{ color: 'var(--accent-cyan)' }} />
+              <div>
+                <div style={{ fontWeight: 600, fontSize: 13 }}>Advanced Network &amp; Custom Relay</div>
+                <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>Zero-config automatic discovery active</div>
+              </div>
             </div>
-            {serverInput && (
-              <button
-                type="button"
-                className="btn btn-secondary"
-                style={{ padding: '3px 8px', fontSize: 11 }}
-                onClick={() => {
-                  setServerInput('');
-                  localStorage.removeItem('dropflow-server-url');
-                  setServerSaved(true);
-                  setTimeout(() => window.location.reload(), 500);
-                }}
-              >
-                Reset to Web P2P
-              </button>
-            )}
-          </div>
-          <p style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 12 }}>
-            To link your mobile phone with your computer over WiFi, or to connect to a custom relay server, enter the address below (or scan your laptop's pairing QR code).
-          </p>
-          <div style={{ display: 'flex', gap: 10, marginBottom: 10 }}>
-            <input
-              type="text"
-              placeholder="e.g. http://192.168.1.15:3001 or wss://server.onrender.com/ws"
-              value={serverInput}
-              onChange={(e) => setServerInput(e.target.value)}
-              style={{
-                flex: 1,
-                padding: '10px 14px',
-                borderRadius: 10,
-                background: 'rgba(255, 255, 255, 0.05)',
-                border: '1px solid var(--border-subtle)',
-                color: '#FFF',
-                fontSize: 13,
-                outline: 'none',
-              }}
-            />
-            <button className="btn btn-secondary" onClick={handleSaveServer}>
-              {serverSaved ? 'Saving...' : 'Connect'}
-            </button>
-          </div>
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
             <button
               type="button"
               className="btn btn-secondary"
-              style={{ padding: '4px 10px', fontSize: 11, borderRadius: 6 }}
-              onClick={() => setServerInput('http://localhost:3001')}
+              style={{ padding: '4px 8px', fontSize: 11, display: 'flex', alignItems: 'center', gap: 4 }}
             >
-              Preset: Localhost (:3001)
+              <span>{showAdvancedNetwork ? 'Hide' : 'Configure'}</span>
+              {showAdvancedNetwork ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
             </button>
           </div>
+
+          {showAdvancedNetwork && (
+            <div style={{ marginTop: 14, paddingTop: 12, borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+              <p style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 12 }}>
+                Devices on the same Wi-Fi connect automatically. You only need to set a custom address if self-hosting a dedicated signaling node.
+              </p>
+              <div style={{ display: 'flex', gap: 10, marginBottom: 10 }}>
+                <input
+                  type="text"
+                  placeholder="e.g. http://192.168.1.15:3001 or wss://relay.custom.com/ws"
+                  value={serverInput}
+                  onChange={(e) => setServerInput(e.target.value)}
+                  style={{
+                    flex: 1,
+                    padding: '10px 14px',
+                    borderRadius: 10,
+                    background: 'rgba(255, 255, 255, 0.05)',
+                    border: '1px solid var(--border-subtle)',
+                    color: '#FFF',
+                    fontSize: 13,
+                    outline: 'none',
+                  }}
+                />
+                <button className="btn btn-secondary" onClick={handleSaveServer}>
+                  {serverSaved ? 'Saving...' : 'Connect'}
+                </button>
+              </div>
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  style={{ padding: '4px 10px', fontSize: 11, borderRadius: 6 }}
+                  onClick={() => setServerInput('http://localhost:3001')}
+                >
+                  Preset: Localhost (:3001)
+                </button>
+                {serverInput && (
+                  <button
+                    type="button"
+                    className="btn btn-secondary"
+                    style={{ padding: '4px 10px', fontSize: 11, borderRadius: 6, color: 'var(--accent-rose)' }}
+                    onClick={() => {
+                      setServerInput('');
+                      localStorage.removeItem('dropflow-server-url');
+                      setServerSaved(true);
+                      setTimeout(() => window.location.reload(), 500);
+                    }}
+                  >
+                    Reset to Default Auto-Discovery
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Auto-Save Directory */}

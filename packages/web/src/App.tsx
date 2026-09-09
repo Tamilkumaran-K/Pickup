@@ -18,6 +18,7 @@ import { DropZone } from './components/DropZone.js';
 import { TransferTelemetry } from './components/TransferTelemetry.js';
 import { TransferQueue } from './components/TransferQueue.js';
 import { PairingModal } from './components/PairingModal.js';
+import { ConnectionResultModal } from './components/ConnectionResultModal.js';
 import { SettingsModal } from './components/SettingsModal.js';
 import { LandingHub } from './components/LandingHub.js';
 import {
@@ -87,6 +88,20 @@ export function App() {
   const lastSubmittedPinRef = useRef<string>('');
   const [peerSecurityMap, setPeerSecurityMap] = useState<Map<string, { fingerprint: string; verified: boolean }>>(new Map());
   const [isPairingOpen, setIsPairingOpen] = useState(false);
+  const [isPairingConnecting, setIsPairingConnecting] = useState(false);
+  const [pairingTargetDevice, setPairingTargetDevice] = useState<Device | null>(null);
+  const [pairingInitialTab, setPairingInitialTab] = useState<'my-code' | 'enter-code'>('my-code');
+  const pairingTimeoutRef = useRef<any>(null);
+  const filePickerTriggerRef = useRef<(() => void) | null>(null);
+  const [connectionResult, setConnectionResult] = useState<{
+    isOpen: boolean;
+    status: 'success' | 'error';
+    peerDevice?: Device | null;
+    errorReason?: string;
+  }>({
+    isOpen: false,
+    status: 'success',
+  });
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [e2eEnabled, setE2eEnabled] = useState(true);
   const [toastMessage, setToastMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
@@ -182,6 +197,10 @@ export function App() {
     });
 
     const unsubPairSuccess = signalingClient.on('pair-success', async (msg) => {
+      clearTimeout(pairingTimeoutRef.current);
+      setIsPairingConnecting(false);
+      setIsPairingOpen(false);
+
       const peer = msg.payload.pairedDevice as Device;
       const role = msg.payload.role;
       const sessionSalt = msg.payload.sessionSalt;
@@ -204,16 +223,49 @@ export function App() {
         }
       }
 
+      const pairedPeer: Device = { ...peer, isPaired: true };
+
+      // Update discovered devices list and select as target
+      setDiscoveredDevices((prev) => {
+        const exists = prev.find((d) => d.id === peer.id);
+        if (exists) {
+          return prev.map((d) => (d.id === peer.id ? pairedPeer : d));
+        }
+        return [pairedPeer, ...prev];
+      });
+      setSelectedDevice(pairedPeer);
+
       sounds.playSuccess();
+      confetti({ particleCount: 90, spread: 70, origin: { y: 0.6 } });
+
       const toastText = fp
         ? `🔒 Paired & E2EE Active with ${peer.name} [Key: ${fp.slice(0, 9)}]`
         : `Successfully paired with ${peer.name}!`;
       showToast(toastText, 'success');
-      confetti({ particleCount: 80, spread: 60, origin: { y: 0.7 } });
+
+      // Trigger High-Visibility Connection Success Popup!
+      setConnectionResult({
+        isOpen: true,
+        status: 'success',
+        peerDevice: pairedPeer,
+      });
     });
 
     const unsubPairReject = signalingClient.on('pair-rejected', (msg) => {
-      showToast(`Pairing failed: ${msg.payload.reason}`, 'error');
+      clearTimeout(pairingTimeoutRef.current);
+      setIsPairingConnecting(false);
+      setIsPairingOpen(false);
+
+      const reason = msg.payload?.reason || 'Invalid or expired 6-digit code. Please check code and try again.';
+      showToast(`Pairing failed: ${reason}`, 'error');
+
+      // Trigger High-Visibility Connection Failed Popup!
+      setConnectionResult({
+        isOpen: true,
+        status: 'error',
+        peerDevice: pairingTargetDevice,
+        errorReason: reason,
+      });
     });
 
     const signalingTypes: any[] = [
@@ -291,8 +343,11 @@ export function App() {
     showToast(`Added simulated peer: ${simDevice.name}! Drop a file on it to test.`);
   };
 
-  const handleOpenPairing = () => {
+  const handleOpenPairing = (targetDevice?: Device | null, tab: 'my-code' | 'enter-code' = 'my-code') => {
     sounds.playClick();
+    setPairingTargetDevice(targetDevice || null);
+    setPairingInitialTab(tab);
+    setIsPairingConnecting(false);
     setIsPairingOpen(true);
     let codeToSend = myPinRef.current;
     if (!codeToSend) {
@@ -336,11 +391,35 @@ export function App() {
       new Map(prev).set(simDevice.id, { fingerprint: 'a7b9-4f21-99c0', verified: true })
     );
     sounds.playSuccess();
+    confetti({ particleCount: 90, spread: 70, origin: { y: 0.6 } });
     showToast(`Successfully paired with ${simDevice.name}!`, 'success');
+
+    // Trigger Connection Success Popup
+    setIsPairingOpen(false);
+    setConnectionResult({
+      isOpen: true,
+      status: 'success',
+      peerDevice: simDevice,
+    });
   };
 
   const handleSubmitPeerPin = (pin: string) => {
     lastSubmittedPinRef.current = pin;
+    setIsPairingConnecting(true);
+
+    // Watchdog: If no response in 12s, show failure popup
+    clearTimeout(pairingTimeoutRef.current);
+    pairingTimeoutRef.current = setTimeout(() => {
+      setIsPairingConnecting(false);
+      setIsPairingOpen(false);
+      setConnectionResult({
+        isOpen: true,
+        status: 'error',
+        peerDevice: pairingTargetDevice,
+        errorReason: 'Pairing handshake timed out. Ensure both devices are connected to the same Wi-Fi network and try again.',
+      });
+    }, 12000);
+
     signalingClient.send({
       type: 'submit-pair-code',
       senderId: selfDevice.id,
@@ -572,7 +651,7 @@ export function App() {
           <button
             id="pair-device-btn"
             className="btn btn-secondary"
-            onClick={handleOpenPairing}
+            onClick={() => handleOpenPairing()}
             title="Pair with phone or laptop"
           >
             <KeyRound size={15} /> Pair Device
@@ -597,73 +676,7 @@ export function App() {
       <main style={{ flex: 1 }}>
         {viewMode === 'radar' || isDesktop ? (
           <div>
-            {/* Cloud Web Mode Guidance or Local Offline Notice */}
-            {!isConnected && !cloudNoticeDismissed && (
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  padding: '12px 18px',
-                  borderRadius: 14,
-                  background: connectionMode === 'cloud-web-p2p' ? 'rgba(6, 182, 212, 0.07)' : 'rgba(245, 158, 11, 0.08)',
-                  border: connectionMode === 'cloud-web-p2p' ? '1px solid rgba(6, 182, 212, 0.25)' : '1px solid rgba(245, 158, 11, 0.25)',
-                  marginBottom: 16,
-                  fontSize: 13,
-                  color: connectionMode === 'cloud-web-p2p' ? '#E0F2FE' : '#FEF3C7',
-                  gap: 12,
-                  flexWrap: 'wrap',
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1, minWidth: 260 }}>
-                  {connectionMode === 'cloud-web-p2p' ? (
-                    <Globe size={18} style={{ color: 'var(--accent-cyan)', flexShrink: 0 }} />
-                  ) : (
-                    <AlertCircle size={18} style={{ color: 'var(--accent-amber)', flexShrink: 0 }} />
-                  )}
-                  <div>
-                    {connectionMode === 'cloud-web-p2p' ? (
-                      <>
-                        <b>Web P2P Mode Active:</b> Direct zero-click transfers via WebRTC. Click <b>Pair Device</b> to connect phones or laptops with a 6-digit PIN or QR code.
-                      </>
-                    ) : (
-                      <>
-                        <b>Local Desktop Node Offline:</b> Start <code>Pickup-Windows.bat</code> on your PC to enable instant LAN subnet discovery.
-                      </>
-                    )}
-                  </div>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <button
-                    className="btn btn-primary"
-                    style={{ padding: '6px 12px', fontSize: 12, minHeight: 30, display: 'flex', alignItems: 'center', gap: 5 }}
-                    onClick={handleOpenPairing}
-                  >
-                    <KeyRound size={13} /> Pair Device
-                  </button>
-                  <button
-                    className="btn btn-secondary"
-                    style={{ padding: '6px 12px', fontSize: 12, minHeight: 30, display: 'flex', alignItems: 'center', gap: 5 }}
-                    onClick={() => setIsSettingsOpen(true)}
-                  >
-                    <Server size={13} /> Link PC Node
-                  </button>
-                  <button
-                    className="btn btn-secondary"
-                    style={{ padding: '6px 8px', fontSize: 12, minHeight: 30, borderRadius: '50%' }}
-                    title="Dismiss notice"
-                    onClick={() => {
-                      localStorage.setItem('dropflow-cloud-notice-dismissed', 'true');
-                      setCloudNoticeDismissed(true);
-                    }}
-                  >
-                    <X size={14} />
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* Top Info Banner */}
+            {/* Top Info Banner with Zero-Config Local Network Indicator */}
             <div
               style={{
                 display: 'flex',
@@ -676,12 +689,17 @@ export function App() {
                 marginBottom: 20,
                 fontSize: 13,
                 color: 'var(--text-secondary)',
+                flexWrap: 'wrap',
+                gap: 10,
               }}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <Wifi size={15} className="pulse-cyan" style={{ color: 'var(--accent-cyan)' }} />
+                <Wifi size={15} className="pulse-cyan" style={{ color: 'var(--accent-cyan)', flexShrink: 0 }} />
                 <span>
-                  <b>{isConnected ? 'Subnet Radar Active:' : 'Web P2P Radar Active:'}</b> Click any device orb or drop files to sync zero-click.
+                  <b>Same-Network Discovery Active:</b>{' '}
+                  {discoveredDevices.length > 0
+                    ? `${discoveredDevices.length} device${discoveredDevices.length > 1 ? 's' : ''} connected on this Wi-Fi network`
+                    : 'Any device on this Wi-Fi network appears automatically with zero configuration.'}
                 </span>
               </div>
               {selectedDevice && peerSecurityMap.has(selectedDevice.id) ? (
@@ -717,7 +735,7 @@ export function App() {
               selectedDevice={selectedDevice}
               onSelectDevice={(device) => {
                 setSelectedDevice(device);
-                showToast(`Target set to ${device.name}`);
+                showToast(`Target set to ${device.name}${device.isPaired ? ' (Paired)' : ''}`);
               }}
               onAddSimulatedDevice={handleAddSimulatedDevice}
             />
@@ -730,6 +748,8 @@ export function App() {
               selectedDevice={selectedDevice}
               onSendFile={handleSendFile}
               onSendText={handleSendText}
+              onOpenPairing={(device) => handleOpenPairing(device || selectedDevice, 'my-code')}
+              filePickerTriggerRef={filePickerTriggerRef}
             />
 
             {/* Files Sent & Received Activity Center */}
@@ -750,13 +770,42 @@ export function App() {
       {/* Pairing Modal */}
       <PairingModal
         isOpen={isPairingOpen}
-        onClose={() => setIsPairingOpen(false)}
+        onClose={() => {
+          setIsPairingOpen(false);
+          setIsPairingConnecting(false);
+          clearTimeout(pairingTimeoutRef.current);
+        }}
         myPin={myPin}
         myDevice={selfDevice}
         onSubmitPin={handleSubmitPeerPin}
         onRegeneratePin={handleRegeneratePairingPin}
         onPairSimulated={handlePairWithSimulatedDevice}
         isConnected={isConnected}
+        targetDevice={pairingTargetDevice}
+        initialTab={pairingInitialTab}
+        isConnecting={isPairingConnecting}
+      />
+
+      {/* Dedicated Connection Result Popup (Success or Failure) */}
+      <ConnectionResultModal
+        isOpen={connectionResult.isOpen}
+        onClose={() => setConnectionResult((prev) => ({ ...prev, isOpen: false }))}
+        status={connectionResult.status}
+        peerDevice={connectionResult.peerDevice}
+        errorReason={connectionResult.errorReason}
+        onSendFiles={() => {
+          setConnectionResult((prev) => ({ ...prev, isOpen: false }));
+          if (connectionResult.peerDevice) {
+            setSelectedDevice(connectionResult.peerDevice);
+          }
+          setTimeout(() => {
+            filePickerTriggerRef.current?.();
+          }, 150);
+        }}
+        onTryAgain={() => {
+          setConnectionResult((prev) => ({ ...prev, isOpen: false }));
+          handleOpenPairing(pairingTargetDevice, 'enter-code');
+        }}
       />
 
       {/* Settings Modal */}

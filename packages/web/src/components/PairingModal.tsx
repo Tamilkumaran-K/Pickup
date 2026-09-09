@@ -14,6 +14,9 @@ interface PairingModalProps {
   onRegeneratePin?: () => void;
   onPairSimulated?: () => void;
   isConnected?: boolean;
+  targetDevice?: Device | null;
+  initialTab?: 'my-code' | 'enter-code';
+  isConnecting?: boolean;
 }
 
 export const PairingModal: React.FC<PairingModalProps> = ({
@@ -25,11 +28,22 @@ export const PairingModal: React.FC<PairingModalProps> = ({
   onRegeneratePin,
   onPairSimulated,
   isConnected = true,
+  targetDevice,
+  initialTab = 'my-code',
+  isConnecting = false,
 }) => {
-  const [activeTab, setActiveTab] = useState<'my-code' | 'enter-code'>('my-code');
+  const [activeTab, setActiveTab] = useState<'my-code' | 'enter-code'>(initialTab);
   const [copied, setCopied] = useState(false);
   const [shared, setShared] = useState(false);
   const [qrDataUrl, setQrDataUrl] = useState<string>('');
+
+  // Sync tab with initialTab when opened
+  useEffect(() => {
+    if (isOpen) {
+      setActiveTab(initialTab);
+      setDigits(['', '', '', '', '', '']);
+    }
+  }, [isOpen, initialTab]);
 
   // Local PIN state to guarantee 0ms instant display even before socket responds
   const [localPin, setLocalPin] = useState<string>(() => myPin || generatePairingPin());
@@ -104,9 +118,8 @@ export const PairingModal: React.FC<PairingModalProps> = ({
       sounds.playSuccess();
       stopCamera();
       onSubmitPin(clean);
-      onClose();
     }
-  }, [onSubmitPin, onClose, stopCamera]);
+  }, [onSubmitPin, stopCamera]);
 
   // Robust universal Camera Scanner effect using jsQR
   useEffect(() => {
@@ -193,12 +206,11 @@ export const PairingModal: React.FC<PairingModalProps> = ({
       if (clean.length === 6) {
         sounds.playSuccess();
         onSubmitPin(clean);
-        onClose();
       } else {
         inputRefs.current[Math.min(clean.length, 5)]?.focus();
       }
     }
-  }, [onSubmitPin, onClose]);
+  }, [onSubmitPin]);
 
   // Sync with prop when server pushes pair-code-created
   useEffect(() => {
@@ -321,7 +333,6 @@ export const PairingModal: React.FC<PairingModalProps> = ({
     if (complete.length === 6) {
       sounds.playSuccess();
       onSubmitPin(complete);
-      onClose();
     }
   };
 
@@ -348,7 +359,7 @@ export const PairingModal: React.FC<PairingModalProps> = ({
         id="pairing-modal-content"
       >
         {/* Header */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: targetDevice ? 10 : 16 }}>
           <h2 style={{ fontSize: 19, display: 'flex', alignItems: 'center', gap: 8, margin: 0 }}>
             <KeyRound size={20} style={{ color: 'var(--accent-cyan)' }} /> Pair Another Device
           </h2>
@@ -361,6 +372,33 @@ export const PairingModal: React.FC<PairingModalProps> = ({
             <X size={18} />
           </button>
         </div>
+
+        {/* Target Device Context Banner */}
+        {targetDevice && (
+          <div
+            id="pairing-target-device-banner"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              padding: '10px 14px',
+              borderRadius: 12,
+              background: 'rgba(6, 182, 212, 0.08)',
+              border: '1px solid rgba(6, 182, 212, 0.25)',
+              marginBottom: 16,
+              fontSize: 13,
+              color: '#E0F2FE',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span style={{ color: 'var(--accent-cyan)' }}>Target:</span>
+              <b>{targetDevice.name}</b>
+            </div>
+            <span style={{ fontSize: 11, color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>
+              {targetDevice.platform.toUpperCase()}
+            </span>
+          </div>
+        )}
 
         {/* Tab switch */}
         <div className="pairing-tabs">
@@ -589,21 +627,44 @@ export const PairingModal: React.FC<PairingModalProps> = ({
               </div>
             )}
 
+            {/* Connecting status banner */}
+            {isConnecting && (
+              <div
+                id="pairing-connecting-status"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 10,
+                  padding: '12px 16px',
+                  borderRadius: 12,
+                  background: 'rgba(6, 182, 212, 0.1)',
+                  border: '1px solid rgba(6, 182, 212, 0.3)',
+                  margin: '14px 0',
+                  color: 'var(--accent-cyan)',
+                  fontSize: 13,
+                  fontWeight: 600,
+                }}
+              >
+                <RefreshCw size={15} className="spin" />
+                <span>Verifying 6-digit code with peer...</span>
+              </div>
+            )}
+
             {/* Submit Button */}
             <button
               id="submit-peer-pin-btn"
               className="btn btn-primary"
               style={{ width: '100%', justifyContent: 'center', padding: '14px', fontSize: 15 }}
-              disabled={enteredPin.length !== 6}
+              disabled={enteredPin.length !== 6 || isConnecting}
               onClick={() => {
-                if (enteredPin.length === 6) {
+                if (enteredPin.length === 6 && !isConnecting) {
                   sounds.playSuccess();
                   onSubmitPin(enteredPin);
-                  onClose();
                 }
               }}
             >
-              Pair and Connect Device
+              {isConnecting ? 'Connecting to Device...' : 'Pair and Connect Device'}
             </button>
 
             {/* Simulated Device Quick Test */}

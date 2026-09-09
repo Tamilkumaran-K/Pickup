@@ -172,9 +172,14 @@ export const RadarView: React.FC<RadarViewProps> = ({
 
         {/* Bottom Radar Controls */}
         <div className="radar-footer-controls">
-          <div className="radar-status-text">
+          <div className="radar-status-text" id="radar-network-status">
             <Wifi size={13} className="pulse-cyan" />
-            <span>Scanning local subnet for AirDrop &amp; DropFlow peers</span>
+            <span>
+              <b>Same Network Active:</b>{' '}
+              {discoveredDevices.length > 0
+                ? `${discoveredDevices.length} device${discoveredDevices.length > 1 ? 's' : ''} discovered nearby (zero-config)`
+                : 'Zero-config active. Open Pickup on any device on this Wi-Fi to connect.'}
+            </span>
           </div>
 
           {onAddSimulatedDevice && (

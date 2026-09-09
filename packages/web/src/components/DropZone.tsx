@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Device } from '@pickup/shared';
 import {
   UploadCloud,
@@ -12,6 +12,8 @@ import {
   Image as ImageIcon,
   Film,
   FileCode,
+  KeyRound,
+  ShieldCheck,
 } from 'lucide-react';
 import { sounds } from '../services/soundEffects.js';
 
@@ -20,6 +22,8 @@ interface DropZoneProps {
   onSendFile: (file: File) => void;
   onSendText?: (text: string) => void;
   disabled?: boolean;
+  onOpenPairing?: (device?: Device) => void;
+  filePickerTriggerRef?: React.MutableRefObject<(() => void) | null>;
 }
 
 function formatBytes(bytes: number): string {
@@ -49,6 +53,8 @@ export const DropZone: React.FC<DropZoneProps> = ({
   onSendFile,
   onSendText,
   disabled,
+  onOpenPairing,
+  filePickerTriggerRef,
 }) => {
   const [activeTab, setActiveTab] = useState<'files' | 'clipboard'>('files');
   const [isDragActive, setIsDragActive] = useState(false);
@@ -56,6 +62,18 @@ export const DropZone: React.FC<DropZoneProps> = ({
   const [textSnippet, setTextSnippet] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Wire up external file picker trigger (e.g. from Success Popup "Send Files Now")
+  useEffect(() => {
+    if (filePickerTriggerRef) {
+      filePickerTriggerRef.current = () => {
+        if (fileInputRef.current) {
+          fileInputRef.current.click();
+        }
+      };
+    }
+  }, [filePickerTriggerRef]);
+
+  const isTargetPaired = selectedDevice?.isPaired === true;
   const isUrl = textSnippet.trim().startsWith('http://') || textSnippet.trim().startsWith('https://');
 
   const handleDragOver = (e: React.DragEvent) => {
@@ -172,15 +190,30 @@ export const DropZone: React.FC<DropZoneProps> = ({
               </div>
 
               <div style={{ display: 'flex', gap: 10 }}>
-                <button
-                  id="send-file-btn"
-                  className="btn btn-primary"
-                  disabled={!selectedDevice || disabled}
-                  onClick={handleTriggerSendFile}
-                >
-                  <Send size={15} />
-                  {selectedDevice ? `Drop on ${selectedDevice.name}` : 'Select a device above'}
-                </button>
+                {selectedDevice && !isTargetPaired && onOpenPairing ? (
+                  <button
+                    id="send-file-btn"
+                    className="btn btn-primary"
+                    disabled={disabled}
+                    onClick={() => {
+                      sounds.playClick();
+                      onOpenPairing(selectedDevice);
+                    }}
+                  >
+                    <KeyRound size={15} />
+                    Pair with {selectedDevice.name} to Send
+                  </button>
+                ) : (
+                  <button
+                    id="send-file-btn"
+                    className="btn btn-primary"
+                    disabled={!selectedDevice || disabled}
+                    onClick={handleTriggerSendFile}
+                  >
+                    <Send size={15} />
+                    {selectedDevice ? `Drop on ${selectedDevice.name}` : 'Select a device above'}
+                  </button>
+                )}
                 <button
                   className="btn btn-secondary"
                   style={{ padding: '8px 12px' }}
@@ -201,12 +234,32 @@ export const DropZone: React.FC<DropZoneProps> = ({
               </div>
               <div className="dropzone-title">
                 {selectedDevice
-                  ? `Drop files to transfer to ${selectedDevice.name}`
+                  ? isTargetPaired
+                    ? `Ready to send to ${selectedDevice.name}`
+                    : `Pair with ${selectedDevice.name} to send files`
                   : 'Drag & drop any file here, or click to browse'}
               </div>
               <div className="dropzone-subtitle">
-                Zero-click auto-save • Direct peer-to-peer over local network • No file size limits
+                {selectedDevice
+                  ? isTargetPaired
+                    ? '✓ Paired & E2EE Verified • Direct peer-to-peer over local network'
+                    : 'Connect with a 6-digit code to enable fast, encrypted file transfers'
+                  : 'Zero-click auto-save • Direct peer-to-peer over local network • No file size limits'}
               </div>
+              {selectedDevice && !isTargetPaired && onOpenPairing && (
+                <button
+                  id="dropzone-pair-prompt-btn"
+                  className="btn btn-primary"
+                  style={{ marginTop: 14, padding: '9px 18px', fontSize: 13, gap: 7, borderRadius: 10 }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    sounds.playClick();
+                    onOpenPairing(selectedDevice);
+                  }}
+                >
+                  <KeyRound size={14} /> Pair with {selectedDevice.name}
+                </button>
+              )}
             </div>
           )}
         </div>
@@ -232,15 +285,30 @@ export const DropZone: React.FC<DropZoneProps> = ({
                 <span>{textSnippet.length} characters</span>
               </div>
 
-              <button
-                id="send-text-btn"
-                className="btn btn-primary"
-                disabled={!textSnippet.trim() || !selectedDevice || disabled}
-                onClick={handleTriggerSendText}
-              >
-                <Send size={15} />
-                {selectedDevice ? `Send to ${selectedDevice.name}` : 'Select a device above'}
-              </button>
+              {selectedDevice && !isTargetPaired && onOpenPairing ? (
+                <button
+                  id="send-text-btn"
+                  className="btn btn-primary"
+                  disabled={!textSnippet.trim() || disabled}
+                  onClick={() => {
+                    sounds.playClick();
+                    onOpenPairing(selectedDevice);
+                  }}
+                >
+                  <KeyRound size={15} />
+                  Pair with {selectedDevice.name} to Send
+                </button>
+              ) : (
+                <button
+                  id="send-text-btn"
+                  className="btn btn-primary"
+                  disabled={!textSnippet.trim() || !selectedDevice || disabled}
+                  onClick={handleTriggerSendText}
+                >
+                  <Send size={15} />
+                  {selectedDevice ? `Send to ${selectedDevice.name}` : 'Select a device above'}
+                </button>
+              )}
             </div>
           </div>
         </div>
