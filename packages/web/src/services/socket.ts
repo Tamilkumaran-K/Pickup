@@ -1,4 +1,5 @@
 import { Device, SignalingMessage, SignalingMessageType } from '@pickup/shared';
+import { safeStorage } from './safeStorage.js';
 
 type MessageHandler = (msg: SignalingMessage) => void;
 
@@ -47,13 +48,13 @@ class SignalingClient {
   }
 
   isCloudWeb(): boolean {
-    return !isLocalEnvironment() && !localStorage.getItem('dropflow-server-url');
+    return !isLocalEnvironment() && !safeStorage.getItem('dropflow-server-url');
   }
 
   private resolveServerUrl(): { url: string; isExplicit: boolean } {
     const params = new URLSearchParams(window.location.search);
     const queryUrl = params.get('server');
-    const savedUrl = localStorage.getItem('dropflow-server-url');
+    const savedUrl = safeStorage.getItem('dropflow-server-url');
     const envUrl = (import.meta as any).env?.VITE_SIGNALING_URL;
 
     if (queryUrl) return { url: queryUrl, isExplicit: true };

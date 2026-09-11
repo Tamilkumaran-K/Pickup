@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { autoSaveManager } from '../services/autoSave.js';
+import { safeStorage } from '../services/safeStorage.js';
 import { Settings, Folder, Shield, X, Check, Laptop, Server, Wifi, ChevronDown, ChevronUp } from 'lucide-react';
 
 interface SettingsModalProps {
@@ -22,7 +23,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   const [nameInput, setNameInput] = useState(deviceName);
   const [savedFolder, setSavedFolder] = useState(autoSaveManager.getDirectoryName());
   const [hasCustomFolder, setHasCustomFolder] = useState(autoSaveManager.hasCustomDirectory());
-  const [serverInput, setServerInput] = useState(() => localStorage.getItem('dropflow-server-url') || '');
+  const [serverInput, setServerInput] = useState(() => safeStorage.getItem('dropflow-server-url') || '');
   const [serverSaved, setServerSaved] = useState(false);
   const [showAdvancedNetwork, setShowAdvancedNetwork] = useState(false);
 
@@ -63,13 +64,13 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
         }
         clean = `${protocol}//${clean}`;
       }
-      localStorage.setItem('dropflow-server-url', clean);
+      safeStorage.setItem('dropflow-server-url', clean);
       setServerSaved(true);
       setTimeout(() => {
         window.location.reload();
       }, 600);
     } else {
-      localStorage.removeItem('dropflow-server-url');
+      safeStorage.removeItem('dropflow-server-url');
       setServerSaved(true);
       setTimeout(() => {
         window.location.reload();
@@ -185,7 +186,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     style={{ padding: '4px 10px', fontSize: 11, borderRadius: 6, color: 'var(--accent-rose)' }}
                     onClick={() => {
                       setServerInput('');
-                      localStorage.removeItem('dropflow-server-url');
+                      safeStorage.removeItem('dropflow-server-url');
                       setServerSaved(true);
                       setTimeout(() => window.location.reload(), 500);
                     }}

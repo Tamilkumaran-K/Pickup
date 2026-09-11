@@ -1,3 +1,5 @@
+import { safeStorage } from './safeStorage.js';
+
 /**
  * Synthesized Web Audio sound effects for tactile micro-interactions.
  * Zero external audio assets required.
@@ -8,7 +10,7 @@ class SoundEffectsService {
   private soundEnabled: boolean = true;
 
   constructor() {
-    const saved = localStorage.getItem('dropflow-sound-enabled');
+    const saved = safeStorage.getItem('dropflow-sound-enabled');
     if (saved !== null) {
       this.soundEnabled = saved === 'true';
     }
@@ -20,7 +22,7 @@ class SoundEffectsService {
 
   toggleSound(): boolean {
     this.soundEnabled = !this.soundEnabled;
-    localStorage.setItem('dropflow-sound-enabled', String(this.soundEnabled));
+    safeStorage.setItem('dropflow-sound-enabled', String(this.soundEnabled));
     if (this.soundEnabled) {
       this.playClick();
     }

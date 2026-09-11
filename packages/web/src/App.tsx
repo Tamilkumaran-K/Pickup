@@ -21,6 +21,7 @@ import { PairingModal } from './components/PairingModal.js';
 import { ConnectionResultModal } from './components/ConnectionResultModal.js';
 import { SettingsModal } from './components/SettingsModal.js';
 import { LandingHub } from './components/LandingHub.js';
+import { safeStorage } from './services/safeStorage.js';
 import {
   Radio,
   Download,
@@ -53,13 +54,13 @@ export function App() {
   const [viewMode, setViewMode] = useState<'radar' | 'hub'>('radar');
   const [soundEnabled, setSoundEnabled] = useState(sounds.isSoundEnabled());
   const [selfDevice, setSelfDevice] = useState<Device>(() => {
-    let id = localStorage.getItem('dropflow-device-id');
+    let id = safeStorage.getItem('dropflow-device-id');
     if (!id) {
       id = `dev-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
-      localStorage.setItem('dropflow-device-id', id);
+      safeStorage.setItem('dropflow-device-id', id);
     }
     const platform = detectPlatform();
-    const storedName = localStorage.getItem('dropflow-device-name');
+    const storedName = safeStorage.getItem('dropflow-device-name');
     const name = storedName || `${platform.charAt(0).toUpperCase() + platform.slice(1)} Device`;
     return {
       id,
@@ -74,7 +75,7 @@ export function App() {
   const [selectedDevice, setSelectedDevice] = useState<Device | null>(null);
   const [transfers, setTransfers] = useState<Transfer[]>(() => {
     try {
-      const saved = localStorage.getItem('dropflow-transfers-history');
+      const saved = safeStorage.getItem('dropflow-transfers-history');
       if (saved) {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed)) return parsed;
@@ -110,7 +111,7 @@ export function App() {
     signalingClient.getConnectionMode()
   );
   const [cloudNoticeDismissed, setCloudNoticeDismissed] = useState<boolean>(() => {
-    return localStorage.getItem('dropflow-cloud-notice-dismissed') === 'true';
+    return safeStorage.getItem('dropflow-cloud-notice-dismissed') === 'true';
   });
 
   const showToast = (text: string, type: 'success' | 'error' = 'success') => {
@@ -134,7 +135,7 @@ export function App() {
     const nativeApi = (window as any).fileDropNative;
     if (typeof nativeApi?.getDeviceInfo === 'function') {
       nativeApi.getDeviceInfo().then((info: any) => {
-        const storedName = localStorage.getItem('dropflow-device-name');
+        const storedName = safeStorage.getItem('dropflow-device-name');
         // Prioritize user's saved custom name over raw hostname
         const chosenName = storedName || info?.name;
         if (chosenName) {
@@ -163,7 +164,7 @@ export function App() {
   // Persist transfers to localStorage and desktop storage whenever they update
   useEffect(() => {
     try {
-      localStorage.setItem('dropflow-transfers-history', JSON.stringify(transfers));
+      safeStorage.setItem('dropflow-transfers-history', JSON.stringify(transfers));
       const nativeApi = (window as any).fileDropNative;
       if (typeof nativeApi?.saveTransfers === 'function') {
         nativeApi.saveTransfers(transfers);
@@ -431,7 +432,7 @@ export function App() {
   const handleUpdateDeviceName = (name: string) => {
     const updated = { ...selfDevice, name };
     setSelfDevice(updated);
-    localStorage.setItem('dropflow-device-name', name);
+    safeStorage.setItem('dropflow-device-name', name);
     const nativeApi = (window as any).fileDropNative;
     if (typeof nativeApi?.setDeviceName === 'function') {
       nativeApi.setDeviceName(name);
@@ -447,7 +448,7 @@ export function App() {
 
   const handleClearHistory = () => {
     setTransfers([]);
-    localStorage.removeItem('dropflow-transfers-history');
+    safeStorage.removeItem('dropflow-transfers-history');
     const nativeApi = (window as any).fileDropNative;
     if (typeof nativeApi?.saveTransfers === 'function') {
       nativeApi.saveTransfers([]);
