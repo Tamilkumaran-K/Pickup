@@ -10,6 +10,9 @@ contextBridge.exposeInMainWorld('fileDropNative', {
   getDeviceInfo: () =>
     ipcRenderer.invoke('get-device-info'),
 
+  getLocalServerInfo: () =>
+    ipcRenderer.invoke('get-local-server-info'),
+
   openSaveFolder: () =>
     ipcRenderer.invoke('open-save-folder'),
 

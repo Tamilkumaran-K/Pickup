@@ -4,11 +4,25 @@ import os from 'os';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
 import { sanitizeFileName, isDangerousFileType } from '@pickup/shared';
+import { startServer } from '@pickup/server';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 let mainWindow: BrowserWindow | null = null;
+let localRelayStarted = false;
+
+function getLocalRelayInfo() {
+  const lanIp = Object.values(os.networkInterfaces())
+    .flat()
+    .find((entry) => entry?.family === 'IPv4' && !entry.internal && !entry.address.startsWith('169.254'))
+    ?.address;
+  const host = lanIp || '127.0.0.1';
+  return {
+    lanUrl: `http://${host}:3001`,
+    wsUrl: 'ws://localhost:3001/ws',
+  };
+}
 
 function createWindow() {
   mainWindow = new BrowserWindow({
@@ -62,7 +76,7 @@ function createWindow() {
     ];
     const found = candidatePaths.find((p) => fs.existsSync(p));
     if (found && mainWindow) {
-      mainWindow.loadFile(found);
+      mainWindow.loadFile(found, { query: { localRelay: getLocalRelayInfo().wsUrl } });
     }
   });
 
@@ -71,10 +85,20 @@ function createWindow() {
   });
 }
 
-app.whenReady().then(() => {
+app.whenReady().then(async () => {
   // Set App User Model ID for Windows notifications
   if (process.platform === 'win32') {
     app.setAppUserModelId('com.pickup.app');
+  }
+
+  // A standalone desktop app previously pointed at its own localhost without
+  // starting a server. Start the Pickup signaling node first so a phone on
+  // the same Wi-Fi or hotspot can pair through the QR/LAN URL.
+  try {
+    await startServer(3001);
+    localRelayStarted = true;
+  } catch (error: any) {
+    console.warn('[Pickup Desktop] Local relay could not start:', error?.message || error);
   }
 
   createWindow();
@@ -226,6 +250,11 @@ ipcMain.handle('get-device-info', async () => {
     hasCustomName: Boolean(settings.deviceName),
   };
 });
+
+ipcMain.handle('get-local-server-info', async () => ({
+  ...getLocalRelayInfo(),
+  started: localRelayStarted,
+}));
 
 // IPC Handler: Set Custom Device Name (persists across restarts)
 ipcMain.handle('set-device-name', async (_: any, name: string) => {

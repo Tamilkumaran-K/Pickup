@@ -61,12 +61,17 @@ class SignalingClient {
   private resolveServerUrl(): { url: string; isExplicit: boolean } {
     const params = new URLSearchParams(window.location.search);
     const queryUrl = params.get('server');
+    const localRelayUrl = params.get('localRelay');
     const savedUrl = safeStorage.getItem('dropflow-server-url');
     const envUrl = (import.meta as any).env?.VITE_SIGNALING_URL;
 
     if (queryUrl) return { url: queryUrl, isExplicit: true };
     if (savedUrl) return { url: savedUrl, isExplicit: true };
     if (envUrl) return { url: envUrl, isExplicit: true };
+    // Packaged desktop apps add this lower-priority local relay. A user-set
+    // server (or a QR link's `server`) must still take precedence for remote
+    // pairing.
+    if (localRelayUrl) return { url: localRelayUrl, isExplicit: true };
 
     const loc = window.location;
     // When hosted on static platforms (e.g. Vercel, Netlify, GitHub Pages), connect directly to cloud relay

@@ -64,7 +64,15 @@ export const PairingModal: React.FC<PairingModalProps> = ({
           setServerLanUrl(cfg.lanUrl);
         }
       })
-      .catch(() => {});
+      .catch(async () => {
+        // Electron is loaded from file://, so /api/config is unavailable.
+        // Ask the native shell for the LAN URL of its embedded relay instead.
+        const nativeApi = (window as any).fileDropNative;
+        if (typeof nativeApi?.getLocalServerInfo === 'function') {
+          const info = await nativeApi.getLocalServerInfo();
+          if (info?.lanUrl) setServerLanUrl(info.lanUrl);
+        }
+      });
   }, []);
 
   // Camera QR Scanner state
@@ -231,7 +239,12 @@ export const PairingModal: React.FC<PairingModalProps> = ({
     // A packaged desktop app is file:// based.  Its localhost is not shared
     // with a phone or a remote computer, so the QR must open the public app
     // and explicitly keep both devices on the same cloud relay.
-    if (isStandaloneDesktop) {
+    const usesLocalRelay = /^wss?:\/\/(localhost|127\.0\.0\.1)(?::\d+)?\/ws$/i.test(relayUrl);
+    if (isStandaloneDesktop && serverLanUrl && usesLocalRelay) {
+      const lan = new URL(serverLanUrl);
+      appOrigin = serverLanUrl;
+      relayUrl = `${lan.protocol === 'https:' ? 'wss:' : 'ws:'}//${lan.host}/ws`;
+    } else if (isStandaloneDesktop) {
       appOrigin = DEFAULT_CLOUD_APP_URL;
       relayUrl = DEFAULT_CLOUD_SIGNALING_URL;
     } else if (serverLanUrl && isLocalHost) {
