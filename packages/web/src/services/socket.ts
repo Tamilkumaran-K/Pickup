@@ -5,6 +5,12 @@ type MessageHandler = (msg: SignalingMessage) => void;
 
 export type ConnectionMode = 'mesh-connected' | 'cloud-web-p2p' | 'connecting' | 'disconnected';
 
+// Standalone desktop clients have no local signaling service.  They must use
+// the shared relay so that a Windows/Mac client can pair with an Android/iOS
+// browser or another computer outside the LAN.
+export const DEFAULT_CLOUD_SIGNALING_URL = 'wss://pickup-server.onrender.com/ws';
+export const DEFAULT_CLOUD_APP_URL = 'https://pickupbeta.vercel.app';
+
 export function isLocalEnvironment(): boolean {
   if (typeof window === 'undefined') return true;
   const loc = window.location;
@@ -29,6 +35,7 @@ class SignalingClient {
   private activeWsUrl = '';
   private connectionMode: ConnectionMode = 'connecting';
   private connectionAttempts = 0;
+  private pendingMessages: SignalingMessage[] = [];
 
   init(device: Device): void {
     this.device = device;
@@ -69,13 +76,19 @@ class SignalingClient {
         loc.host.includes('netlify.app') ||
         loc.host.includes('github.io');
       if (isStaticHost) {
-        return { url: 'wss://pickup-server.onrender.com/ws', isExplicit: false };
+        return { url: DEFAULT_CLOUD_SIGNALING_URL, isExplicit: false };
       }
     }
 
     const protocol = loc.protocol === 'https:' ? 'wss:' : 'ws:';
-    // If running in standalone Electron via file://, connect directly to port 3001
-    const host = loc.protocol === 'file:' || !loc.host ? 'localhost:3001' : loc.host;
+    // A packaged Electron app is loaded from file://.  localhost:3001 on
+    // another device is a different server, which made remote PIN/QR pairing
+    // impossible.  A custom/local relay can still be supplied in Settings.
+    if (loc.protocol === 'file:' || !loc.host) {
+      return { url: DEFAULT_CLOUD_SIGNALING_URL, isExplicit: false };
+    }
+
+    const host = loc.host;
     return { url: `${protocol}//${host}/ws`, isExplicit: false };
   }
 
@@ -124,6 +137,7 @@ class SignalingClient {
           timestamp: Date.now(),
         });
       }
+      this.flushPendingMessages();
       this.emit('connection-change', { connected: true, mode: 'mesh-connected' } as any);
     };
 
@@ -164,7 +178,23 @@ class SignalingClient {
     if (this.ws && this.ws.readyState === WebSocket.OPEN) {
       this.ws.send(JSON.stringify(msg));
     } else {
-      console.warn('[SignalingClient] Socket not open, message queued or skipped:', msg.type);
+      // QR deep links can submit their PIN before the socket on the newly
+      // opened device reaches OPEN.  Keep the intent until registration has
+      // been sent, rather than silently losing the pairing request.
+      if (this.pendingMessages.length >= 100) {
+        this.pendingMessages.shift();
+      }
+      this.pendingMessages.push(msg);
+      console.info('[SignalingClient] Socket not open; queued message:', msg.type);
+    }
+  }
+
+  private flushPendingMessages(): void {
+    if (!this.ws || this.ws.readyState !== WebSocket.OPEN) return;
+
+    const queued = this.pendingMessages.splice(0);
+    for (const msg of queued) {
+      this.ws.send(JSON.stringify(msg));
     }
   }
 
@@ -244,4 +274,3 @@ class SignalingClient {
 }
 
 export const signalingClient = new SignalingClient();
-

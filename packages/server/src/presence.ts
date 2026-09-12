@@ -76,7 +76,16 @@ export class PresenceManager {
   }
 
   /**
-   * Returns visible devices for a given deviceId (devices on same IP/network, or explicitly paired devices).
+   * Returns every online peer that is connected to this signaling node.
+   *
+   * A client address is not a reliable description of a user's network.  A
+   * laptop on Ethernet, a second laptop on Wi-Fi, and a phone using a hotspot
+   * can all be able to reach this server while having unrelated private (or
+   * public) addresses.  Filtering by a guessed subnet made those peers
+   * disappear from the radar even though signaling and the relay could reach
+   * them.  The signaling node is therefore the discovery boundary: devices
+   * connected to the same node can see one another, and pairing continues to
+   * mark trusted peers for cross-network transfers.
    */
   getVisibleDevices(deviceId: string): Device[] {
     const currentSession = this.sessions.get(deviceId);
@@ -86,55 +95,14 @@ export class PresenceManager {
     for (const [id, session] of this.sessions.entries()) {
       if (id === deviceId) continue; // Skip self
 
-      const isSameNetwork = this.isSameNetwork(session.remoteIp, currentSession.remoteIp);
       const isPaired = currentSession.pairedDevices.has(id);
-
-      // Only devices on the same local network/IP or explicitly paired devices are visible on the radar
-      if (isSameNetwork || isPaired) {
-        visible.push({
-          ...session.device,
-          isPaired,
-        });
-      }
+      visible.push({
+        ...session.device,
+        isPaired,
+      });
     }
 
     return visible;
-  }
-
-  /**
-   * Checks whether two IP addresses belong to the same local network or subnet.
-   */
-  private isSameNetwork(ipA: string, ipB: string): boolean {
-    if (ipA === ipB) return true;
-    if (ipA === '127.0.0.1' || ipB === '127.0.0.1' || ipA === '::1' || ipB === '::1') return true;
-
-    // Normalize IPv6-mapped IPv4 e.g. ::ffff:192.168.1.10 -> 192.168.1.10
-    const cleanA = ipA.replace(/^.*:/, '');
-    const cleanB = ipB.replace(/^.*:/, '');
-    if (cleanA === cleanB) return true;
-
-    const partsA = cleanA.split('.');
-    const partsB = cleanB.split('.');
-    if (partsA.length === 4 && partsB.length === 4) {
-      // 192.168.x.x class C subnet match
-      if (partsA[0] === '192' && partsA[1] === '168' && partsA[2] === partsB[2]) {
-        return true;
-      }
-      // 10.x.x.x class A private network
-      if (partsA[0] === '10' && partsA[1] === partsB[1]) {
-        return true;
-      }
-      // 172.16.x.x - 172.31.x.x class B private network
-      if (partsA[0] === '172' && partsB[0] === '172') {
-        const o2A = parseInt(partsA[1], 10);
-        const o2B = parseInt(partsB[1], 10);
-        if (o2A >= 16 && o2A <= 31 && o2B >= 16 && o2B <= 31 && o2A === o2B) {
-          return true;
-        }
-      }
-    }
-
-    return false;
   }
 
   getAllOnlineDevices(): Device[] {

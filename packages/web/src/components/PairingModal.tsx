@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Device, generatePairingPin, cleanPairingPin, formatPairingPin, parseQrData, isValidPairingPin } from '@pickup/shared';
 import { X, QrCode, KeyRound, ShieldCheck, Check, RefreshCw, Share2, Camera, Sparkles, Smartphone, Copy, AlertCircle, Wifi, Globe } from 'lucide-react';
 import { sounds } from '../services/soundEffects.js';
+import { DEFAULT_CLOUD_APP_URL, DEFAULT_CLOUD_SIGNALING_URL, signalingClient } from '../services/socket.js';
 import QRCode from 'qrcode';
 import jsQR from 'jsqr';
 
@@ -219,18 +220,38 @@ export const PairingModal: React.FC<PairingModalProps> = ({
     }
   }, [myPin]);
 
+  const buildPairingLink = useCallback((pin: string) => {
+    const cleanPin = cleanPairingPin(pin);
+    let appOrigin = typeof window !== 'undefined' ? window.location.origin : DEFAULT_CLOUD_APP_URL;
+    let relayUrl = signalingClient.getActiveServerUrl() || DEFAULT_CLOUD_SIGNALING_URL;
+    const protocol = typeof window !== 'undefined' ? window.location.protocol : '';
+    const isStandaloneDesktop = protocol === 'file:' || appOrigin === 'null' || !appOrigin;
+    const isLocalHost = appOrigin.includes('localhost') || appOrigin.includes('127.0.0.1');
+
+    // A packaged desktop app is file:// based.  Its localhost is not shared
+    // with a phone or a remote computer, so the QR must open the public app
+    // and explicitly keep both devices on the same cloud relay.
+    if (isStandaloneDesktop) {
+      appOrigin = DEFAULT_CLOUD_APP_URL;
+      relayUrl = DEFAULT_CLOUD_SIGNALING_URL;
+    } else if (serverLanUrl && isLocalHost) {
+      // Keep the convenient LAN QR flow for local development and self-hosted
+      // installations, but use a device-reachable WS address rather than the
+      // desktop's localhost address.
+      appOrigin = serverLanUrl;
+      const lan = new URL(serverLanUrl);
+      relayUrl = `${lan.protocol === 'https:' ? 'wss:' : 'ws:'}//${lan.host}/ws`;
+    }
+
+    const params = new URLSearchParams({ pair: cleanPin, server: relayUrl });
+    return `${appOrigin.replace(/\/$/, '')}/?${params.toString()}`;
+  }, [serverLanUrl]);
+
   // Generate QR Code whenever active pin or device changes
   useEffect(() => {
     if (!isOpen) return;
     const activePin = cleanPairingPin(localPin);
-    let origin = typeof window !== 'undefined' ? window.location.origin : '';
-
-    // If running on localhost or desktop file protocol, use LAN IP so phones can connect directly
-    if (serverLanUrl && (origin.includes('localhost') || origin.includes('127.0.0.1') || origin.startsWith('file:') || !origin)) {
-      origin = serverLanUrl;
-    }
-
-    const qrText = `${origin}/?pair=${activePin}`;
+    const qrText = buildPairingLink(activePin);
     
     QRCode.toDataURL(qrText, {
       margin: 1,
@@ -242,7 +263,7 @@ export const PairingModal: React.FC<PairingModalProps> = ({
     })
       .then((url) => setQrDataUrl(url))
       .catch((err) => console.warn('QR Code generation failed:', err));
-  }, [localPin, isOpen, myDevice, serverLanUrl]);
+  }, [localPin, isOpen, myDevice, buildPairingLink]);
 
   // Clean up camera stream if modal closes
   useEffect(() => {
@@ -272,8 +293,7 @@ export const PairingModal: React.FC<PairingModalProps> = ({
   const handleShare = async () => {
     sounds.playClick();
     if (navigator.vibrate) navigator.vibrate(20);
-    const origin = typeof window !== 'undefined' ? window.location.origin : '';
-    const shareUrl = `${origin}/?pair=${paddedPin}`;
+    const shareUrl = buildPairingLink(paddedPin);
     
     if (typeof navigator.share === 'function') {
       try {
@@ -488,7 +508,7 @@ export const PairingModal: React.FC<PairingModalProps> = ({
                   style={{ padding: '3px 8px', fontSize: 11, minHeight: 26, flexShrink: 0 }}
                   onClick={() => {
                     sounds.playClick();
-                    navigator.clipboard.writeText(`${serverLanUrl}/?pair=${paddedPin}`);
+                    navigator.clipboard.writeText(buildPairingLink(paddedPin));
                     setCopied(true);
                     setTimeout(() => setCopied(false), 2000);
                   }}

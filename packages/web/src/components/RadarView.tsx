@@ -143,7 +143,7 @@ export const RadarView: React.FC<RadarViewProps> = ({
                 sounds.playClick();
                 onSelectDevice(device);
               }}
-              title={device.isPaired ? `Paired device: ${device.name} (Cross-Network P2P)` : `Local Wi-Fi peer: ${device.name}`}
+              title={device.isPaired ? `Paired device: ${device.name} (trusted cross-network peer)` : `Online peer: ${device.name} (Ethernet, Wi-Fi, hotspot, or remote network)`}
             >
               <div className="peer-node-bubble">
                 {isSelected && (
@@ -154,7 +154,7 @@ export const RadarView: React.FC<RadarViewProps> = ({
                 <div className="peer-icon-wrapper">
                   {getPlatformIcon(device.platform)}
                 </div>
-                <span className="peer-status-dot" title={device.isPaired ? 'Paired & Online' : 'Online on Wi-Fi'} />
+                <span className="peer-status-dot" title={device.isPaired ? 'Paired & Online' : 'Online and discoverable'} />
 
                 {device.isPaired && (
                   <div className="peer-shield-badge" title="Trusted & Paired Device (Cross-Network E2EE)">
@@ -177,8 +177,8 @@ export const RadarView: React.FC<RadarViewProps> = ({
             <span>
               <b>Radar Active:</b>{' '}
               {discoveredDevices.length > 0
-                ? `${discoveredDevices.length} device${discoveredDevices.length > 1 ? 's' : ''} connected (Wi-Fi auto-discovered or paired cross-network)`
-                : 'Local Wi-Fi devices appear automatically. Remote devices connect anytime via 6-digit Pair Mode.'}
+                ? `${discoveredDevices.length} device${discoveredDevices.length > 1 ? 's' : ''} online (Ethernet, Wi-Fi, hotspot, and remote peers)`
+                : 'Online devices connected to this Pickup node appear automatically. Pair a peer to mark it trusted.'}
             </span>
           </div>
 

@@ -219,8 +219,8 @@ describe('Server Package - Security Hardening Suite', () => {
     });
   });
 
-  describe('6. Radar Network Isolation & Visibility Controls', () => {
-    test('Only same network or paired devices appear on the radar', () => {
+  describe('6. Radar Cross-Network Discovery & Trust Controls', () => {
+    test('Online devices appear across network interfaces while pairing marks trusted peers', () => {
       const presence = serverApp.presence;
       const dummyWs = { readyState: 1, send: () => {}, close: () => {} } as any;
 
@@ -228,17 +228,19 @@ describe('Server Package - Security Hardening Suite', () => {
       const deviceLan2: Device = { id: 'dev-lan-2', name: 'Office Phone', platform: 'ios', lastSeen: Date.now() };
       const deviceExternal: Device = { id: 'dev-ext-1', name: 'Remote Stranger', platform: 'android', lastSeen: Date.now() };
 
-      // Register two devices on same subnet 192.168.1.x and one on unrelated external IP 203.0.113.45
+      // Register devices that represent Ethernet, Wi-Fi, and a mobile hotspot.
       presence.register(dummyWs, deviceLan1, '192.168.1.15');
       presence.register(dummyWs, deviceLan2, '192.168.1.42');
       presence.register(dummyWs, deviceExternal, '203.0.113.45');
 
-      // Laptop 1 should see Office Phone (same subnet), but should NOT see Remote Stranger
+      // The radar uses the signaling node as its discovery boundary, so all
+      // online peers remain visible even when their addresses are unrelated.
       const visibleToLaptop = presence.getVisibleDevices(deviceLan1.id);
       assert.ok(visibleToLaptop.some(d => d.id === deviceLan2.id));
-      assert.equal(visibleToLaptop.some(d => d.id === deviceExternal.id), false);
+      assert.ok(visibleToLaptop.some(d => d.id === deviceExternal.id));
+      assert.equal(visibleToLaptop.find(d => d.id === deviceExternal.id)?.isPaired, false);
 
-      // Once Laptop 1 explicitly pairs with Remote Stranger, Remote Stranger becomes visible!
+      // Pairing marks the already discoverable cross-network peer as trusted.
       presence.addPairing(deviceLan1.id, deviceExternal.id);
       const visibleAfterPairing = presence.getVisibleDevices(deviceLan1.id);
       assert.ok(visibleAfterPairing.some(d => d.id === deviceExternal.id));
@@ -249,4 +251,3 @@ describe('Server Package - Security Hardening Suite', () => {
     });
   });
 });
-

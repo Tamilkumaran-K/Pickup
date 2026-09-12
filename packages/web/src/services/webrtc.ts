@@ -152,6 +152,22 @@ class WebRtcManager {
       // Fallback relay chunk over WebSocket
       const packet = new Uint8Array(msg.payload.packet);
       await this.handleIncomingChunk(packet, 'websocket-relay');
+    } else if (msg.type === 'transfer-complete') {
+      const transferId = msg.payload?.transferId as string | undefined;
+      const transfer = transferId ? this.activeTransfers.get(transferId) : undefined;
+      if (transfer) {
+        transfer.status = 'completed';
+        transfer.completedAt = Date.now();
+        this.notifyProgress(transfer);
+      }
+    } else if (msg.type === 'transfer-error' || msg.type === 'transfer-cancel') {
+      const transferId = msg.payload?.transferId as string | undefined;
+      const transfer = transferId ? this.activeTransfers.get(transferId) : undefined;
+      if (transfer) {
+        transfer.status = msg.type === 'transfer-cancel' ? 'cancelled' : 'failed';
+        transfer.error = msg.payload?.error || (msg.type === 'transfer-cancel' ? 'Transfer cancelled by peer' : 'Transfer failed');
+        this.notifyProgress(transfer);
+      }
     }
   }
 

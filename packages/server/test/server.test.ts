@@ -35,9 +35,11 @@ describe('Server Package - Mr. Perfect Verification Suite', () => {
     });
   });
 
-  function createClientWs(): Promise<WebSocket> {
+  function createClientWs(forwardedIp?: string): Promise<WebSocket> {
     return new Promise((resolve, reject) => {
-      const ws = new WebSocket(`ws://127.0.0.1:${serverPort}/ws`);
+      const ws = new WebSocket(`ws://127.0.0.1:${serverPort}/ws`, {
+        headers: forwardedIp ? { 'x-forwarded-for': forwardedIp } : undefined,
+      });
       ws.on('open', () => {
         activeSockets.push(ws);
         resolve(ws);
@@ -160,6 +162,44 @@ describe('Server Package - Mr. Perfect Verification Suite', () => {
 
     wsA.close();
     wsB.close();
+  });
+
+  test('Discovery: Ethernet, Wi-Fi, and hotspot peers remain visible across different subnets', async () => {
+    const ethernetPc = await createClientWs('192.168.1.20');
+    const wifiLaptop = await createClientWs('192.168.50.14');
+    const hotspotPhone = await createClientWs('172.20.10.2');
+
+    const pc: Device = { id: 'cross-network-pc', name: 'Ethernet PC', platform: 'windows', lastSeen: Date.now() };
+    const laptop: Device = { id: 'cross-network-laptop', name: 'Wi-Fi Laptop', platform: 'macos', lastSeen: Date.now() };
+    const phone: Device = { id: 'cross-network-phone', name: 'Hotspot Phone', platform: 'android', lastSeen: Date.now() };
+
+    ethernetPc.send(JSON.stringify({ type: 'register', senderId: pc.id, payload: { device: pc }, timestamp: Date.now() }));
+    await waitForMessage(ethernetPc, 'device-list');
+
+    const pcSeesLaptop = waitForMessage(ethernetPc, 'device-list', (msg) =>
+      msg.payload?.devices?.some((d: Device) => d.id === laptop.id)
+    );
+    wifiLaptop.send(JSON.stringify({ type: 'register', senderId: laptop.id, payload: { device: laptop }, timestamp: Date.now() }));
+    await pcSeesLaptop;
+
+    const pcSeesPhone = waitForMessage(ethernetPc, 'device-list', (msg) =>
+      msg.payload?.devices?.some((d: Device) => d.id === phone.id)
+    );
+    const laptopSeesBoth = waitForMessage(wifiLaptop, 'device-list', (msg) => {
+      const ids = (msg.payload?.devices as Device[] | undefined)?.map((d) => d.id) || [];
+      return ids.includes(pc.id) && ids.includes(phone.id);
+    });
+    const phoneSeesBoth = waitForMessage(hotspotPhone, 'device-list', (msg) => {
+      const ids = (msg.payload?.devices as Device[] | undefined)?.map((d) => d.id) || [];
+      return ids.includes(pc.id) && ids.includes(laptop.id);
+    });
+    hotspotPhone.send(JSON.stringify({ type: 'register', senderId: phone.id, payload: { device: phone }, timestamp: Date.now() }));
+
+    await Promise.all([pcSeesPhone, laptopSeesBoth, phoneSeesBoth]);
+
+    ethernetPc.close();
+    wifiLaptop.close();
+    hotspotPhone.close();
   });
 
   test('Happy Path: WebRTC signaling and relay forwarding between peers', async () => {

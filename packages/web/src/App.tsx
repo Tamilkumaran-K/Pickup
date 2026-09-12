@@ -275,6 +275,9 @@ export function App() {
       'webrtc-ice',
       'transfer-init',
       'relay-chunk',
+      'transfer-complete',
+      'transfer-error',
+      'transfer-cancel',
     ];
 
     const unsubs = signalingTypes.map((t) =>
@@ -699,8 +702,8 @@ export function App() {
                 <span>
                   <b>Radar Active:</b>{' '}
                   {discoveredDevices.length > 0
-                    ? `${discoveredDevices.length} device${discoveredDevices.length > 1 ? 's' : ''} connected (Local Wi-Fi or Remote Paired)`
-                    : 'Local Wi-Fi peers auto-discovered • Remote devices connect via 6-digit Pair Mode'}
+                    ? `${discoveredDevices.length} device${discoveredDevices.length > 1 ? 's' : ''} online (Ethernet, Wi-Fi, hotspot, or remote)`
+                    : 'Online peers on this Pickup node appear automatically • Pair a device to mark it trusted'}
                 </span>
               </div>
               {selectedDevice && peerSecurityMap.has(selectedDevice.id) ? (
