@@ -408,6 +408,17 @@ export function App() {
   };
 
   const handleSubmitPeerPin = (pin: string) => {
+    if (signalingClient.getConnectionMode() === 'disconnected') {
+      const relayUrl = signalingClient.getActiveServerUrl() || 'the configured signaling relay';
+      setConnectionResult({
+        isOpen: true,
+        status: 'error',
+        peerDevice: pairingTargetDevice,
+        errorReason: `Pickup cannot reach ${relayUrl}. Remote pairing requires both devices to connect to the same online Pickup signaling server.`,
+      });
+      return;
+    }
+
     lastSubmittedPinRef.current = pin;
     setIsPairingConnecting(true);
 
@@ -420,7 +431,9 @@ export function App() {
         isOpen: true,
         status: 'error',
         peerDevice: pairingTargetDevice,
-        errorReason: 'Pairing handshake timed out. Check that both devices have an active internet connection and that the 6-digit PIN matches.',
+        errorReason: signalingClient.getIsConnected()
+          ? 'Pairing handshake timed out. Verify that the 6-digit PIN is current and that the other device is still online.'
+          : `Pickup cannot reach ${signalingClient.getActiveServerUrl() || 'the configured signaling relay'}. Both devices must use the same online Pickup signaling server.`,
       });
     }, 12000);
 

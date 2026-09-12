@@ -443,6 +443,24 @@ export const PairingModal: React.FC<PairingModalProps> = ({
           </div>
         </div>
 
+        {!isConnected && (
+          <div
+            role="alert"
+            style={{
+              marginBottom: 16,
+              padding: '10px 14px',
+              borderRadius: 12,
+              background: 'rgba(244, 63, 94, 0.10)',
+              border: '1px solid rgba(244, 63, 94, 0.35)',
+              color: '#FDA4AF',
+              fontSize: 12,
+              lineHeight: 1.4,
+            }}
+          >
+            <b>Relay offline:</b> A pairing code cannot work until this device connects to the Pickup signaling server. Check the relay address in Settings before sharing a code.
+          </div>
+        )}
+
         {/* Tab switch */}
         <div className="pairing-tabs">
           <button

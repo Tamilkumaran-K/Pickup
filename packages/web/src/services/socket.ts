@@ -101,18 +101,6 @@ class SignalingClient {
     this.activeWsUrl = wsUrl;
     this.connectionAttempts++;
 
-    // If on a static cloud host (e.g. Vercel) without an explicit server URL,
-    // and initial probe fails, operate smoothly in cloud-web-p2p mode without flooding errors.
-    if (!isLocalEnvironment() && !isExplicit && this.connectionAttempts > 1) {
-      this.isConnected = false;
-      this.connectionMode = 'cloud-web-p2p';
-      this.emit('connection-change', { connected: false, mode: 'cloud-web-p2p' } as any);
-      // Low-frequency background health check every 45s
-      clearTimeout(this.reconnectTimer);
-      this.reconnectTimer = setTimeout(() => this.connect(), 45000);
-      return;
-    }
-
     this.connectionMode = 'connecting';
     this.emit('connection-change', { connected: false, mode: 'connecting' } as any);
 
@@ -165,11 +153,15 @@ class SignalingClient {
   private handleDisconnect(isExplicit: boolean): void {
     this.isConnected = false;
     const isCloud = !isLocalEnvironment() && !isExplicit;
-    this.connectionMode = isCloud ? 'cloud-web-p2p' : 'disconnected';
+    // No WebRTC peer can be established without signaling.  Do not present a
+    // failed cloud socket as an active P2P connection; it leaves the user with
+    // a PIN that cannot possibly be claimed.
+    this.connectionMode = 'disconnected';
     this.emit('connection-change', { connected: false, mode: this.connectionMode } as any);
 
     clearTimeout(this.reconnectTimer);
-    // Exponential / adaptive backoff: 3s for local / explicit, 30s for cloud web standalone
+    // Use a quieter retry cadence for a cloud service, without hiding an
+    // unavailable relay from the UI.
     const delay = isCloud ? 30000 : Math.min(2500 * Math.max(1, this.connectionAttempts), 15000);
     this.reconnectTimer = setTimeout(() => this.connect(), delay);
   }
