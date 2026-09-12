@@ -49,12 +49,12 @@ export function securityHeaders() {
     res.setHeader(
       'Content-Security-Policy',
       "default-src 'self'; " +
-      "script-src 'self' 'unsafe-inline' 'unsafe-eval'; " +
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval' 'wasm-unsafe-eval' https://va.vercel-scripts.com https://vercel.live; " +
       "worker-src 'self' blob:; " +
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
       "font-src 'self' https://fonts.gstatic.com; " +
       "img-src 'self' data: blob:; " +
-      "connect-src 'self' ws: wss: http: https:; " +
+      "connect-src 'self' ws: wss: http: https: https://*.vercel-insights.com https://vercel.live; " +
       "object-src 'none'; " +
       "frame-ancestors 'none';"
     );

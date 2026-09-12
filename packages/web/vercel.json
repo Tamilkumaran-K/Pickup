@@ -1,5 +1,9 @@
 {
+  "cleanUrls": true,
   "rewrites": [
-    { "source": "/(.*)", "destination": "/index.html" }
+    {
+      "source": "/((?!assets/|downloads/|favicon|.*\\..*).*)",
+      "destination": "/index.html"
+    }
   ]
 }
